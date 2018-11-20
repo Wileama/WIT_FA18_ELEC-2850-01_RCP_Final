@@ -59,23 +59,41 @@ radiator is a liquid droplet radiator. This very
 effectively cools the ship, but disables it's
 ability to manuever. IE it lowers the ship heat
 energy more rapidly, but prevents the player
-from manuvering.*/
-typedef struct
+from manuvering. I'm wornder if it would be
+better to have an array of bools of a structure
+of bools. I think the array would be easier to
+iterate through, but the structure would be
+conceptually easier to work with. The structure
+should also be easier to update.*/
+
+typedef struct 
 {
-	bool wpn1,									//weapon system 1
-		 wpn2,									//weapon system 2
-		 wpn3,									//weapon system 3
-		 shield1,								//shield generator 1
-		 shield2,								//shield generator 2
-		 shield3,								//shield generator 3
-		 eng,									//engines
-		 radar,									//radar
-		 air,									//life support system
-		 rad;									//radiator system
+	bool wpn1,
+		 wpn2,
+		 wpn3,
+		 shield1,
+		 shield2,
+		 shield3,
+		 eng,
+		 radar,
+		 air,
+		 rad;
 } systems;
 
-/*These constants are the maxium possible values
-for the player*/
+//bool systems[] = { 0,							//weapon system 1
+//				   0,							//weapon system 2
+//				   0,							//weapon system 3
+//				   0,							//shield generator 1
+//				   0,							//shield generator 2
+//				   0,							//shield generator 3
+//				   0,							//engines
+//				   0,							//radar
+//				   0,							//life support
+//				   0 };							//liquid radiator
+
+/*These constants are useful shortcuts we might 
+need while calculating, but also serve as single
+point to update if values change*/
 const angle right = 0, up = 90, left = 180, down = 270;
 const velocity m_max = 50000, w_max = 1440;
 const health hp_max = 25, sp_max = 75;
@@ -114,7 +132,7 @@ void main()
 
 	object entities[100];
 
-	systems player_sys = { 0, 0, 0, 0, 0, 0, 1, 1, 1, 0 };
+	//systems player_sys = { 0, 0, 0, 0, 0, 0, 1, 1, 1, 0 };
  
 }
 
