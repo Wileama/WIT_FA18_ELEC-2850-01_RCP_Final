@@ -21,6 +21,9 @@
     <ClCompile Include="exception_handler.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="test.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="address_map_nios2.h">

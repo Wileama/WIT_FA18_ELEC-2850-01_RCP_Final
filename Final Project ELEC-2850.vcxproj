@@ -117,6 +117,7 @@
   <ItemGroup>
     <ClCompile Include="exception_handler.c" />
     <ClCompile Include="main.c" />
+    <ClCompile Include="test.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="address_map_nios2.h" />

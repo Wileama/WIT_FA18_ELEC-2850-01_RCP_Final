@@ -44,14 +44,40 @@ typedef struct
 } object;
 
 
-const solid col_player = { { {0,0,0,0,0},
-							 {0,1,0,1,0},
-							 {0,0,0,0,0},
-							 {0,1,1,1,0},
-							 {0,0,0,0,0},} };
+//constants
+#define hp_max 25
+#define sp_max 75
 
-const solid col_obst   = { { {1,1,1,1,1},
-							 {1,1,1,1,1},
-							 {1,1,1,1,1},
-							 {1,1,1,1,1},
-							 {1,1,1,1,1},} };
+/*These constants are used to define the std starting values
+ for the different objects in the game*/
+
+//object player_obj;
+
+//player_obj.collision = col_player;
+
+
+const object obj_player = { 10, 0, 0, 0, 0, hp_max, 0,
+							{ { {0,0,0,0,0},
+								{0,1,0,1,0},
+								{0,0,0,0,0},
+								{0,1,1,1,0},
+								{0,0,0,0,0} } },
+							{ { {BLUE, BLUE, BLUE, BLUE, BLUE},
+								{BLUE, RED,  BLUE, RED,  BLUE},
+								{BLUE, BLUE, BLUE, BLUE, BLUE},
+								{BLUE, RED,  RED,  RED,  BLUE},
+								{BLUE, BLUE, BLUE, BLUE, BLUE} } },
+							0 };
+
+const object obj_obs = { 20, 0, 0, 0, 0, 0, 0,
+							{ { {1,1,1,1,1},
+								{1,1,1,1,1},
+								{1,1,1,1,1},
+								{1,1,1,1,1},
+								{1,1,1,1,1} } },
+							{ { {YELLOW,YELLOW,YELLOW,YELLOW,YELLOW},
+								{YELLOW,YELLOW,YELLOW,YELLOW,YELLOW},
+								{YELLOW,YELLOW,YELLOW,YELLOW,YELLOW},
+								{YELLOW,YELLOW,YELLOW,YELLOW,YELLOW},
+								{YELLOW,YELLOW,YELLOW,YELLOW,YELLOW} } },
+							10 };

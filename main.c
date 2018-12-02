@@ -1,4 +1,5 @@
 #include "address_map_nios2.h"
+#include "nios2_ctrl_reg_macros.h"
 #include "DE0_graphics.h"
 #include "game_obj.h"
 #include <stdio.h>
@@ -20,10 +21,6 @@ volatile int *LED_ptr = GREEN_LED_BASE,							//address location for green LEDs
 			 *button_ptr = PUSHBUTTON_BASE,						//address location for push buttons
 			 *hex_ptr = HEX3_HEX0_BASE,							//address location for the hex displays
 			 *timer_ptr = INTERVAL_TIMER_BASE;					//address location for interval timer
-
-
-//constants
-const health hp_max = 25; sp_max = 75;
 
 
 //Variables
@@ -51,7 +48,8 @@ void main()
 		Button_val,
 		lives = 3,
 		pt_total,
-		counter;
+		counter,
+		i;
 
 	/*my thoughts here are to use the timer to count our frames
 	per second, or how many times we are refreshing the entire
@@ -61,7 +59,7 @@ void main()
 	idea of how fast our code is.*/
 	//This segement of code sets up the timer to run
 	*(timer_ptr) = 0;											//clears the interval timer status
-	int counter = ONESEC;										//sets the new count down value
+	counter = ONESEC;										//sets the new count down value
 	*(timer_ptr + 0x2) = (counter & 0xFFFF);					//loads the first half of the counter value
 	*(timer_ptr + 0x3) = (counter >> 16) & 0xFFFF;				//loads the second half of the counter value
 
@@ -71,14 +69,22 @@ void main()
 	NIOS2_WRITE_IENABLE(0x01);									//set interrupt mask bits for levels 0 (IntervalTimer)
 	NIOS2_WRITE_STATUS(1);										//enable Nios II interrupts
 
-
-	/*These constants are used to define the std starting values
-	for the different objects in the game*/
-	const object player_obj = {10, 0, 0, 0, 0, hp_max, 0, 1, 0},
-					obs_obj = {20, 0, 0, 0, 0, 0, 0, 1, 10};
-
 	object entities[100];
 
+	entities[0] = obj_player;
+	entities[1] = obj_obs;
+
+	entities[0].x = 25;
+	entities[0].y = 15;
+
+	entities[1].x = 25;
+	entities[1].y = 20;
+
+	for (i = 0; i < 2; i++)
+	{
+		draw_sprite(entities[i].x, entities[i].y, SPRITE_SIZE, &entities[i].sprite);
+	}
+	
  
 }
 
