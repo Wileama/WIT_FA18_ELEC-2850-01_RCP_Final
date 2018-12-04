@@ -15,10 +15,10 @@
 #define YELLOW 252												// 248 decimal = YELLOW
 
 
+ //constants
+#define RES_X 80												//VGA screen width size
+#define RES_Y 60												//VGA screen height size
 #define SPRITE_SIZE 5											//used to define the size of a sprite
-
-
-//constants
 #define hp_max 25												//Max health value
 #define sp_max 75												//Max shield value
 
@@ -138,6 +138,15 @@ void plot_pixel(location x, location y, int pixel_color)
 }
 
 
+//returns the integer value of the pixel at position (x,y)
+char read_pixel(location x, location y)
+{
+	char pixel_value;
+	pixel_value = *(volatile char *)(pixel_buffer_start + (y << 7) + x);
+	return pixel_value;
+}
+
+
 //makes the entire screen one color
 void clear_screen(int color)
 {
@@ -209,4 +218,102 @@ void update_sprite(location *x, location *y, velocity i, velocity j, int size, i
 	remove_sprite(*x, *y, size);
 	*x = (int) *x + i, *y = (int) *y + j;
 	draw_sprite(*x, *y, size, sprite);
+}
+
+
+/*redraws the entire screen shifted 1 pixel to the left.
+Requires an array of new pixels to draw on the right hand side.
+***Does not update object position data***
+
+Works by redrawing the enter screen starting from the top left
+corner of the screen and advancing to the right. Each pixel is
+set to the value of the next pixel in the proccess. At the right
+most edge of the screen the function draws the color of a new 
+pixel as specified by an array. The function then moves down a
+row and repeats for the entire screen.*/
+void adv_screen_l(int new_pixel[RES_Y])
+{
+	int y, x;
+
+	for (y = 0; y < res_y; y++)
+	{
+		for (x = 0; x < res_x - 1; x++) { plot_pixel(x, y, read_pixel(x+1, y)); }
+		//draws the new pixel on the right side of the screen
+		plot_pixel(res_x - 1, y, new_pixel[y]);
+	}
+}
+
+
+/*redraws the entire screen shifted 1 pixel to the right.
+Requires an array of new pixels to draw on the left hand side.
+***Does not update object position data***
+
+Works by redrawing the enter screen starting from the top right
+corner of the screen and advancing to the left. Each pixel is
+set to the value of the next pixel in the proccess. At the left
+most edge of the screen the function draws the color of a new
+pixel as specified by an array. The function then moves down a
+row and repeats for the entire screen.*/
+void adv_screen_r(int new_pixel[RES_Y])
+{
+	int y, x;
+
+	for (y = 0; y < res_y; y++)
+	{
+		for (x = res_x - 1; x > 0 ; x--) { plot_pixel(x, y, read_pixel(x - 1, y)); }
+		//draws the new pixel on the left side of the screen
+		plot_pixel(0, y, new_pixel[y]);
+	}
+}
+
+
+/*redraws the entire screen shifted 1 pixel up. Requires an
+array of new pixels to draw on the bottom hand side.
+***Does not update object position data***
+
+Works by redrawing the enter screen starting from the top left
+corner of the screen and advancing to the right. Each pixel is
+set to the value of the pixel below it. At the right most edge of
+the screen the function moves down a row and repeats the
+proccess. Upon reaching the final row the screen now draws the
+new pixels as specified by an array.*/
+void adv_screen_u(int new_pixel[RES_X])
+{
+	int y, x;
+
+	for (y = 0; y < res_y - 1; y++)
+	{
+		for (x = 0; x < res_x; x++) { plot_pixel(x, y, read_pixel(x , y + 1)); }
+	}
+	
+	//draws the bottom most row
+	y = res_y - 1;
+	for (x = 0; x < res_x; x++) { plot_pixel(x, y, new_pixel[x]); }
+}
+
+
+/*redraws the entire screen shifted 1 pixel up. Requires an
+array of new pixels to draw on the bottom hand side.
+***Does not update object position data***
+
+Works by redrawing the enter screen starting from the bottom
+left corner of the screen and advancing to the right. Each pixel
+is set to the value of the pixel above it. At the right most edge
+of the screen the function moves up a row and repeats the
+proccess. Upon reaching the final row the screen now draws the
+new pixels as specified by an array.*/
+void adv_screen_d(int new_pixel[RES_X])
+{
+	int y, x;
+
+
+	for (y = res_y - 1; y > 0; y--)
+	{
+		for (x = 0; x < res_x; x++) { plot_pixel(x, y, read_pixel(x, y - 1)); }
+		plot_pixel(res_x - 1, y, new_pixel[y]);
+	}
+
+	//draws the top most row
+	y = 0;
+	for (x = 0; x < res_x; x++) { plot_pixel(x, y, new_pixel[x]); }
 }
