@@ -1,4 +1,8 @@
 # WIT_FA18_ELEC-2850-01_RCP_Final
+
+HA HA J/K it will be none of this. A simple platformer at best. We can use pre-existing vector graphics, and the don't yet have sufficient graphical resolution to make this work. Read for ideas if you want though.
+
+
 Final project for WIT FA18 ELEC-2850 using the DEO media computer. The project is a variant on asteroids, using the ten switches to turn sub-systems, like weapons, shields, and life support on & off.
 
 The Three push buttons are used to rotate the players ship left and right. In addition to thrusting the ship in the direction it is pointing
