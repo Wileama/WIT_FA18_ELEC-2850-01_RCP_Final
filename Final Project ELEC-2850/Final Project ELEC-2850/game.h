@@ -19,8 +19,7 @@
 #define RES_X 80												//VGA screen width size
 #define RES_Y 60												//VGA screen height size
 #define SPRITE_SIZE 5											//used to define the size of a sprite
-#define hp_max 25												//Max health value
-#define sp_max 75												//Max shield value
+
 
 //hardware addresses
 volatile int pixel_buffer_start = 0x08000000;					//VGA pixel buffer
