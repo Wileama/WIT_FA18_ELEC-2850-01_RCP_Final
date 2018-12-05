@@ -118,12 +118,6 @@ void main()
 	entities[0].i = 10;
 	entities[0].j = 10;
 
-	entities[1] = obj_obs;
-	entities[1].x = 25;
-	entities[1].y = 20;
-	entities[1].i = 0;
-	entities[1].j = 0;
-
 	entities[2] = obj_obs;
 	entities[2].x = 45;
 	entities[2].y = 20;
@@ -213,27 +207,22 @@ void main()
 			entities[1].x <= 0
 			and your performing a logical and on the result
 			of both*/
-			if ((entities[0].x && entities[1].x) <= 0) {
+			if (entities[0].x <= 0) {
 				entities[0].x = 0;
-				entities[1].x = 0;
 			}
-
 			//you could replace 70 with x_res - 1 
 			//or > x_res
-			else if ((entities[0].x && entities[1].x) >= 79) {
+			else if (entities[0].x >= _res-1)
 				entities[0].x = res_x;
-				entities[1].x = res_x;
 			}
 			
-			else if ((entities[0].y && entities[1].y) <= 0) {
+			else if (entities[0].y <= 0) {
 				entities[0].y = 0;
-				entities[1].y = 0;
 			}
 
 			//ditto to the 59 => y_res - 1
-			else if ((entities[0].y && entities[1].y) >= 59) {
+			else if (entities[0] >= 59) {
 				entities[0].y = res_y;
-				entities[1].y = res_y;
 			}
 
 			break;

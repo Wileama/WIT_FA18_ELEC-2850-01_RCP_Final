@@ -39,7 +39,19 @@ const int res_x = 80,											//VGA screen width size
 
 
 //custom enum/typedef/structures
-//this enum creates boolean vars
+//this enum creates boolean varsVolumemax	Frequencies (Hz)	Vout (V)
+100	100	1.25
+100	110	1.25
+100	130	1.25
+100	200	1.25
+100	400	1.25
+100	1,000	1.25
+100	2,000	1.25
+100	5,000	1.25
+100	10,000	1.25
+100	14,500	1.25
+100	20,000	1.25
+
 typedef enum { false, true } bool;
 
 
