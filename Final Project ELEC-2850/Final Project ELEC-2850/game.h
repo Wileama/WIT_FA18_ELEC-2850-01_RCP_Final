@@ -378,7 +378,11 @@ void adv_screen_rd(int left_pixel[RES_Y - GAME_TOP], int top_pixel[RES_X])
 
 
 //game functions
-bool grd_chk(location x, location y)
+/*This functions checks the pixels underneath a sprite to see
+if the color indicates a solid object. If a solid is found
+beneath the sprite the function returns true, otherwise false is 
+returned*/
+bool gnd_chk(location x, location y)
 {
 	int i;
 
