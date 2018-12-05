@@ -19,7 +19,7 @@
 //game values
 #define hp_max 25												//Max health value
 #define sp_max 75												//Max shield value
-#define starting_lives 3													//Default number of lives
+#define starting_lives 3										//Default number of lives
 
 
 //Globals
@@ -131,7 +131,7 @@ void main()
 
 		switch (new_input) {
 
-		case W:												// moves up
+		case W:													// moves up
 			entities[0].i = 0,
 				entities[0].j = -1,
 				entities[1].i = 0,
@@ -144,21 +144,21 @@ void main()
 			//entities[1].j = 1;
 			break;
 
-		case A:												//moves left
+		case A:													//moves left
 			entities[0].i = -1,
 				entities[0].j = 0,
 				entities[1].i = -1,
 				entities[1].j = 0;
 			break;
 
-		case S:												//moves down
+		case S:													//moves down
 			entities[0].i = 0,
 				entities[0].j = 1,
 				entities[1].i = 0,
 				entities[1].j = 1;
 			break;
 
-		case D:												//moves left
+		case D:													//moves left
 			entities[0].i = 1,
 				entities[0].j = 0,
 				entities[1].i = 1,
@@ -192,16 +192,18 @@ void main()
 				entities[0].x = res_x;
 				entities[1].x = res_x;
 			}
+			
+			else if ((entities[0].y && entities[1].y) <= 0) {
+				entities[0].y = 0;
+				entities[1].y = 0;
+			}
 
+			//ditto to the 59 => y_res - 1
 			else if ((entities[0].y && entities[1].y) >= 59) {
 				entities[0].y = res_y;
 				entities[1].y = res_y;
 			}
 
-			else if ((entities[0].y && entities[1].y) = > 0) {
-				entities[0].y = 0;
-				entities[1].y = 0;
-			}
 			break;
 		}
 
