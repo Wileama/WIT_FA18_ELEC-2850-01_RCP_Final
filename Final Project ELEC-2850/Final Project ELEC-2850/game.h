@@ -17,8 +17,15 @@
 
  //constants
 #define RES_X 80												//VGA screen width size
-#define RES_Y 60												//VGA screen height size
+#define RES_Y 60												//VGA screen height size																
 #define SPRITE_SIZE 5											//used to define the size of a sprite
+
+
+/*used to define the top of the game screen. pixels on vertical 
+row 4 and below will be the game world. pixels above this row
+will provide the player with game info like health, lives,
+points, etc.*/
+#define GAME_TOP 4
 
 
 //hardware addresses
@@ -90,41 +97,6 @@ typedef struct
 	image sprite;												//stores the sprite the object will use								object.sprite.pixel[y][x]
 	unsigned points;											//objects point value, or point total
 } object;
-
-
-/*These constants are used to define the std starting values
- for the different objects in the game*/
-
-//object player_obj;
-
-//player_obj.collision = col_player;
-
-
-const object obj_player = { 10, 0, 0, 0, 0, hp_max, 0,
-							{ { {0,0,0,0,0},
-								{0,1,0,1,0},
-								{0,0,0,0,0},
-								{0,1,1,1,0},
-								{0,0,0,0,0} } },
-							{ { {BLUE, BLUE, BLUE, BLUE, BLUE},
-								{BLUE, RED,  BLUE, RED,  BLUE},
-								{BLUE, BLUE, BLUE, BLUE, BLUE},
-								{BLUE, RED,  RED,  RED,  BLUE},
-								{BLUE, BLUE, BLUE, BLUE, BLUE} } },
-							0 };
-
-const object obj_obs = { 20, 0, 0, 0, 0, 0, 0,
-							{ { {1,1,1,1,1},
-								{1,1,1,1,1},
-								{1,1,1,1,1},
-								{1,1,1,1,1},
-								{1,1,1,1,1} } },
-							{ { {YELLOW,YELLOW,YELLOW,YELLOW,YELLOW},
-								{YELLOW,YELLOW,YELLOW,YELLOW,YELLOW},
-								{YELLOW,YELLOW,YELLOW,YELLOW,YELLOW},
-								{YELLOW,YELLOW,YELLOW,YELLOW,YELLOW},
-								{YELLOW,YELLOW,YELLOW,YELLOW,YELLOW} } },
-							10 };
 
 
 /*draws a single pixel at a point x, y of the desired color. The
@@ -230,15 +202,15 @@ set to the value of the next pixel in the proccess. At the right
 most edge of the screen the function draws the color of a new 
 pixel as specified by an array. The function then moves down a
 row and repeats for the entire screen.*/
-void adv_screen_l(int new_pixel[RES_Y])
+void adv_screen_l(int right_pixel[RES_Y - GAME_TOP])
 {
 	int y, x;
 
-	for (y = 0; y < res_y; y++)
+	for (y = GAME_TOP; y < res_y; y++)
 	{
 		for (x = 0; x < res_x - 1; x++) { plot_pixel(x, y, read_pixel(x+1, y)); }
 		//draws the new pixel on the right side of the screen
-		plot_pixel(res_x - 1, y, new_pixel[y]);
+		plot_pixel(res_x - 1, y, right_pixel[y - GAME_TOP]);
 	}
 }
 
@@ -253,15 +225,15 @@ set to the value of the next pixel in the proccess. At the left
 most edge of the screen the function draws the color of a new
 pixel as specified by an array. The function then moves down a
 row and repeats for the entire screen.*/
-void adv_screen_r(int new_pixel[RES_Y])
+void adv_screen_r(int left_pixel[RES_Y - GAME_TOP])
 {
 	int y, x;
 
-	for (y = 0; y < res_y; y++)
+	for (y = GAME_TOP; y < res_y; y++)
 	{
 		for (x = res_x - 1; x > 0 ; x--) { plot_pixel(x, y, read_pixel(x - 1, y)); }
 		//draws the new pixel on the left side of the screen
-		plot_pixel(0, y, new_pixel[y]);
+		plot_pixel(0, y, left_pixel[y - GAME_TOP]);
 	}
 }
 
@@ -276,18 +248,18 @@ set to the value of the pixel below it. At the right most edge of
 the screen the function moves down a row and repeats the
 proccess. Upon reaching the final row the screen now draws the
 new pixels as specified by an array.*/
-void adv_screen_u(int new_pixel[RES_X])
+void adv_screen_u(int bottom_pixel[RES_X])
 {
 	int y, x;
 
-	for (y = 0; y < res_y - 1; y++)
+	for (y = GAME_TOP; y < res_y - 1; y++)
 	{
 		for (x = 0; x < res_x; x++) { plot_pixel(x, y, read_pixel(x , y + 1)); }
 	}
 	
 	//draws the bottom most row
 	y = res_y - 1;
-	for (x = 0; x < res_x; x++) { plot_pixel(x, y, new_pixel[x]); }
+	for (x = 0; x < res_x; x++) { plot_pixel(x, y, bottom_pixel[x]); }
 }
 
 
@@ -301,18 +273,96 @@ is set to the value of the pixel above it. At the right most edge
 of the screen the function moves up a row and repeats the
 proccess. Upon reaching the final row the screen now draws the
 new pixels as specified by an array.*/
-void adv_screen_d(int new_pixel[RES_X])
+void adv_screen_d(int top_pixel[RES_X])
 {
 	int y, x;
 
 
-	for (y = res_y - 1; y > 0; y--)
+	for (y = res_y - 1; y > GAME_TOP; y--)
 	{
 		for (x = 0; x < res_x; x++) { plot_pixel(x, y, read_pixel(x, y - 1)); }
-		plot_pixel(res_x - 1, y, new_pixel[y]);
+		plot_pixel(res_x - 1, y, top_pixel[y - GAME_TOP]);
 	}
 
 	//draws the top most row
-	y = 0;
-	for (x = 0; x < res_x; x++) { plot_pixel(x, y, new_pixel[x]); }
+	y = GAME_TOP;
+	for (x = 0; x < res_x; x++) { plot_pixel(x, y, top_pixel[x]); }
+}
+
+
+/*These fucnctions are a combinations of the ones above,
+performing both steps in a single redraw. Thus improving speed.*/
+//advance left and up
+void adv_screen_lu(int right_pixel[RES_Y - GAME_TOP], int bottom_pixel[RES_X])
+{
+	int y, x;
+
+	for (y = GAME_TOP; y < res_y - 1; y++)
+	{
+		for (x = 0; x < res_x - 1; x++) { plot_pixel(x, y, read_pixel(x + 1, y + 1)); }
+		//draws the new pixel on the right side of the screen
+		plot_pixel(res_x - 1, y, right_pixel[y - GAME_TOP]);
+	}
+
+	//draws the bottom most row
+	y = res_y - 1;
+	for (x = 0; x < res_x; x++) { plot_pixel(x, y, bottom_pixel[x]); }
+
+}
+
+
+//advance left and down
+void adv_screen_ld(int right_pixel[RES_Y - GAME_TOP], int top_pixel[RES_X])
+{
+	int y, x;
+
+	for (y = res_y - 1; y > GAME_TOP; y--)
+	{
+		for (x = 0; x < res_x - 1; x++) { plot_pixel(x, y, read_pixel(x + 1, y - 1)); }
+		//draws the new pixel on the right side of the screen
+		plot_pixel(res_x - 1, y, right_pixel[y - GAME_TOP]);
+	}
+
+	//draws the top most row
+	y = GAME_TOP;
+	for (x = 0; x < res_x; x++) { plot_pixel(x, y, top_pixel[x]); }
+
+}
+
+
+//advance right and up
+void adv_screen_ru(int left_pixel[RES_Y - GAME_TOP], int bottom_pixel[RES_X])
+{
+	int y, x;
+
+	for (y = GAME_TOP; y < res_y - 1; y++)
+	{
+		for (x = res_x - 1; x > 0; x--) { plot_pixel(x, y, read_pixel(x - 1, y + 1)); }
+		//draws the new pixel on the left side of the screen
+		plot_pixel(0, y, left_pixel[y - GAME_TOP]);
+	}
+
+	//draws the bottom most row
+	y = res_y - 1;
+	for (x = res_x - 1; x > 0; x--) { plot_pixel(x, y, bottom_pixel[x]); }
+
+}
+
+
+//advance right and down
+void adv_screen_rd(int left_pixel[RES_Y - GAME_TOP], int top_pixel[RES_X])
+{
+	int y, x;
+
+	for (y = res_y - 1; y > GAME_TOP; y--)
+	{
+		for (x = res_x - 1; x > 0; x--) { plot_pixel(x, y, read_pixel(x - 1, y - 1)); }
+		//draws the new pixel on the left side of the screen
+		plot_pixel(res_x - 1, y, left_pixel[y - GAME_TOP]);
+	}
+
+	//draws the top most row
+	y = GAME_TOP;
+	for (x = res_x - 1; x > 0; x--) { plot_pixel(x, y, top_pixel[x]); }
+
 }

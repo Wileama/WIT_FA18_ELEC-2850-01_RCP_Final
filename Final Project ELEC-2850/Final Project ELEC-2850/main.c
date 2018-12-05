@@ -10,10 +10,10 @@
 
 
 //Keyboard Values
-#define W 119
-#define A 97
-#define D 100
-#define S 115
+#define W 119													//
+#define A 97													//
+#define D 100													//
+#define S 115													//
 
 
 //game values
@@ -37,6 +37,38 @@ volatile int *LED_ptr = (int *) GREEN_LED_BASE,					//address location for green
 bool fps = 0;													//This variable is used by timer and ISR
 
 
+/*These constants are used to define the std starting values
+ for the different objects in the game*/
+
+//object player;
+const object obj_player = { 10, 0, 0, 0, 0, hp_max, 0,
+							{ { {0,0,0,0,0},
+								{0,1,0,1,0},
+								{0,0,0,0,0},
+								{0,1,1,1,0},
+								{0,0,0,0,0} } },
+							{ { {BLUE, BLUE, BLUE, BLUE, BLUE},
+								{BLUE, RED,  BLUE, RED,  BLUE},
+								{BLUE, BLUE, BLUE, BLUE, BLUE},
+								{BLUE, RED,  RED,  RED,  BLUE},
+								{BLUE, BLUE, BLUE, BLUE, BLUE} } },
+							0 };
+
+//object obstacle 
+const object obj_obs = { 20, 0, 0, 0, 0, 0, 0,
+							{ { {1,1,1,1,1},
+								{1,1,1,1,1},
+								{1,1,1,1,1},
+								{1,1,1,1,1},
+								{1,1,1,1,1} } },
+							{ { {YELLOW,YELLOW,YELLOW,YELLOW,YELLOW},
+								{YELLOW,YELLOW,YELLOW,YELLOW,YELLOW},
+								{YELLOW,YELLOW,YELLOW,YELLOW,YELLOW},
+								{YELLOW,YELLOW,YELLOW,YELLOW,YELLOW},
+								{YELLOW,YELLOW,YELLOW,YELLOW,YELLOW} } },
+							10 };
+
+
 void main()
 {
 	int SW_val,													//used to store sliding sw values, can be optimized
@@ -51,7 +83,7 @@ void main()
 	/*these arrays hold the color values of all news pixels when
 	moving the entire screen left, right, up or down.
 	Current only hold a single blue pixel as a test case*/
-	int new_pixels_lr[RES_Y] = { BLUE },
+	int new_pixels_lr[RES_Y - GAME_TOP] = { BLUE },
 		new_pixels_ud[RES_X] = { BLUE };
 
 	
@@ -75,7 +107,7 @@ void main()
 
 	object entities[100];
 
-	clear_screen(BLACK);
+	clear_screen(BLUE);
 
 	new_input = *(JTAG_UART_ptr);								//reads the JTAG
 	
@@ -116,115 +148,115 @@ void main()
 	//for (i = 1; i < 6; i++)
 	//{
 	//    for (j = 0; j < ; j++)
-	//	{
+	//   {
 	//        draw_sprite(entities[i].x, entities[i].y, SPRITE_SIZE, &entities[i].sprite);
 	//    }
 	//}
 
 
-	while (1)
-	{
-		if (new_input & pixel_buffer_start) {
-			new_input = 0x000000FF;								// the new input will be stored in the least sig dig
-		}
+	//while (1)
+	//{
+	//	if (new_input & pixel_buffer_start) {
+	//		new_input = 0x000000FF;								// the new input will be stored in the least sig dig
+	//	}
 
 
-		switch (new_input) {
+	//	switch (new_input) {
 
-		case W:													// moves up
-			entities[0].i = 0,
-				entities[0].j = -1,
-				entities[1].i = 0,
-				entities[1].j = -1;
+	//	case W:													// moves up
+	//		entities[0].i = 0,
+	//		entities[0].j = -1,
+	//		entities[1].i = 0,
+	//		entities[1].j = -1;
 
-			//update_sprite(&entities[0].x, &entities[0].y, entities[0].i, entities[0].j, SPRITE_SIZE, &entities[0].sprite)
-			//entities[0].i = 0, perhaps to implement gravity would mean have another update back down, im not sure
-			//entities[0].j = 1,
-			//entities[1].i = 0,
-			//entities[1].j = 1;
-			break;
+	//		//update_sprite(&entities[0].x, &entities[0].y, entities[0].i, entities[0].j, SPRITE_SIZE, &entities[0].sprite)
+	//		//entities[0].i = 0, perhaps to implement gravity would mean have another update back down, im not sure
+	//		//entities[0].j = 1,
+	//		//entities[1].i = 0,
+	//		//entities[1].j = 1;
+	//		break;
 
-		case A:													//moves left
-			entities[0].i = -1,
-				entities[0].j = 0,
-				entities[1].i = -1,
-				entities[1].j = 0;
-			break;
+	//	case A:													//moves left
+	//		entities[0].i = -1,
+	//		entities[0].j = 0,
+	//		entities[1].i = -1,
+	//		entities[1].j = 0;
+	//		break;
 
-		case S:													//moves down
-			entities[0].i = 0,
-				entities[0].j = 1,
-				entities[1].i = 0,
-				entities[1].j = 1;
-			break;
+	//	case S:													//moves down
+	//		entities[0].i = 0,
+	//		entities[0].j = 1,
+	//		entities[1].i = 0,
+	//		entities[1].j = 1;
+	//		break;
 
-		case D:													//moves left
-			entities[0].i = 1,
-				entities[0].j = 0,
-				entities[1].i = 1,
-				entities[1].j = 0;
-			break;
+	//	case D:													//moves left
+	//		entities[0].i = 1,
+	//		entities[0].j = 0,
+	//		entities[1].i = 1,
+	//		entities[1].j = 0;
+	//		break;
 
-		default:
-			/*Rafael I don't know what you want to have
-			happen, but I can almost garuntee this section
-			isn't going to do what you want.
-			you're doing a logical and with the value of
-			entities[0].x and entities[1].x that test will
-			evalute to true if either one is non-zero and be
-			false if both are zero.
-			I think what you want is more like:
-			(entities[0].x <= 0 && entities[1].x <= 0)
-			so you got the test on the left:
-			entities[0].x <= 0
-			and the test on the right:
-			entities[1].x <= 0
-			and your performing a logical and on the result
-			of both*/
-			if ((entities[0].x && entities[1].x) <= 0) {
-				entities[0].x = 0;
-				entities[1].x = 0;
-			}
+	//	default:
+	//		/*Rafael I don't know what you want to have
+	//		happen, but I can almost garuntee this section
+	//		isn't going to do what you want.
+	//		you're doing a logical and with the value of
+	//		entities[0].x and entities[1].x that test will
+	//		evalute to true if either one is non-zero and be
+	//		false if both are zero.
+	//		I think what you want is more like:
+	//		(entities[0].x <= 0 && entities[1].x <= 0)
+	//		so you got the test on the left:
+	//		entities[0].x <= 0
+	//		and the test on the right:
+	//		entities[1].x <= 0
+	//		and your performing a logical and on the result
+	//		of both*/
+	//		if ((entities[0].x && entities[1].x) <= 0) {
+	//			entities[0].x = 0;
+	//			entities[1].x = 0;
+	//		}
 
-			//you could replace 70 with x_res - 1 
-			//or > x_res
-			else if ((entities[0].x && entities[1].x) >= 79) {
-				entities[0].x = res_x;
-				entities[1].x = res_x;
-			}
-			
-			else if ((entities[0].y && entities[1].y) <= 0) {
-				entities[0].y = 0;
-				entities[1].y = 0;
-			}
+	//		//you could replace 70 with x_res - 1 
+	//		//or > x_res
+	//		else if ((entities[0].x && entities[1].x) >= 79) {
+	//			entities[0].x = res_x;
+	//			entities[1].x = res_x;
+	//		}
+	//		
+	//		else if ((entities[0].y && entities[1].y) <= 0) {
+	//			entities[0].y = 0;
+	//			entities[1].y = 0;
+	//		}
 
-			//ditto to the 59 => y_res - 1
-			else if ((entities[0].y && entities[1].y) >= 59) {
-				entities[0].y = res_y;
-				entities[1].y = res_y;
-			}
+	//		//ditto to the 59 => y_res - 1
+	//		else if ((entities[0].y && entities[1].y) >= 59) {
+	//			entities[0].y = res_y;
+	//			entities[1].y = res_y;
+	//		}
 
-			break;
-		}
+	//		break;
+	//	}
 
-		//redraws sprite after keyboard input adjusts velocity
-		update_sprite(&entities[0].x, &entities[0].y, entities[0].i, entities[0].j, SPRITE_SIZE, &entities[0].sprite);
-
-
-		//set up collision
-		if ((entities[0].x == entities[2].x && entities[0].y == entities[2].y)) {
-			remove_sprite(entities[0].x, entities[0].y, SPRITE_SIZE);
-		}
+	//	//redraws sprite after keyboard input adjusts velocity
+	//	update_sprite(&entities[0].x, &entities[0].y, entities[0].i, entities[0].j, SPRITE_SIZE, &entities[0].sprite);
 
 
-		for (i = 0; i < 2; i++)
-		{
+	//	//set up collision
+	//	if ((entities[0].x == entities[2].x && entities[0].y == entities[2].y)) {
+	//		remove_sprite(entities[0].x, entities[0].y, SPRITE_SIZE);
+	//	}
+
+
+	//	for (i = 0; i < 2; i++)
+	//	{
 			draw_sprite(entities[i].x, entities[i].y, SPRITE_SIZE, &entities[i].sprite);
-		}
-	}
+	//	}
+	//}
 	
 
-	/*Code used to hello world visual functions
+	//Code used to test visual functions
 	while (1)
 	{
 		
@@ -240,27 +272,32 @@ void main()
 			remove_sprite(entities[0].x, entities[0].y, SPRITE_SIZE);
 		}
 
-		
 		if (*SW_ptr & 0x04)
 		{
-			adv_screen_l(new_pixels_lr);
+			adv_screen_lu(new_pixels_lr, new_pixels_ud);
 		}
 
 		if (*SW_ptr & 0x08)
 		{
-			adv_screen_r(new_pixels_lr);
+			adv_screen_ld(new_pixels_lr, new_pixels_ud);
 		}
 
 		if (*SW_ptr & 0x10)
 		{
-			adv_screen_u(new_pixels_ud);
+			adv_screen_ru(new_pixels_lr, new_pixels_ud);
 		}
 
 		if (*SW_ptr & 0x20)
 		{
-			adv_screen_u(new_pixels_ud);
+			adv_screen_rd(new_pixels_lr, new_pixels_ud);
 		}
-	}*/
+
+		if (*SW_ptr & 0x40)
+		{
+			adv_screen_d(new_pixels_ud);
+		}
+
+	}
 	
 }
 
