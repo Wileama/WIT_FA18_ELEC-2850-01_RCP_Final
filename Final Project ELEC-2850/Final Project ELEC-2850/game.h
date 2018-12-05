@@ -35,8 +35,8 @@ volatile int pixel_buffer_start = 0x08000000;					//VGA pixel buffer
 //useful constants
 const int res_x = 80,											//VGA screen width size
 		  res_y = 60,											//VGA screen height size
-		  color_back = BLACK;									//Color of the background
-
+		  color_back = BLACK,									//Color of the background
+		  color_solid = YELLOW;									//Colr used to define solid obects
 
 //custom enum/typedef/structures
 //this enum creates boolean varsVolumemax	Frequencies (Hz)	Vout (V)
@@ -111,6 +111,8 @@ typedef struct
 } object;
 
 
+
+//
 /*draws a single pixel at a point x, y of the desired color. The
 origin is the top left. x & y are positive int values. x is the
 distance in pixels from the left of the screen. y is the
@@ -377,4 +379,29 @@ void adv_screen_rd(int left_pixel[RES_Y - GAME_TOP], int top_pixel[RES_X])
 	y = GAME_TOP;
 	for (x = res_x - 1; x > 0; x--) { plot_pixel(x, y, top_pixel[x]); }
 
+}
+
+
+
+
+
+
+
+
+
+//game functions
+/*This functions checks the pixels underneath a sprite to see
+if the color indicates a solid object. If a solid is found
+beneath the sprite the function returns true, otherwise false is 
+returned*/
+bool gnd_chk(location x, location y)
+{
+	int i;
+
+	for (i = 0; i < SPRITE_SIZE; i++)
+	{
+		if (read_pixel(x + i, y + SPRITE_SIZE ) == color_solid) { return 1; }
+	}
+
+	return 0;	
 }
