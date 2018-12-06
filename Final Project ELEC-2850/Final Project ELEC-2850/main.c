@@ -23,6 +23,7 @@
 
 
 //game values
+#define MAX_VELOCITY 5											//maxium velocity the object may move in one direction
 #define hp_max 25												//Max health value
 #define sp_max 75												//Max shield value
 #define starting_lives 3										//Default number of lives
@@ -34,6 +35,7 @@ volatile int *LED_ptr = (int *) GREEN_LED_BASE,					//address location for green
 			 *SW_ptr = (int *) SLIDER_SWITCH_BASE,				//address location for sliding switches
 			 *button_ptr = (int *) PUSHBUTTON_BASE,				//address location for push buttons
 			 *hex_ptr = (int *) HEX3_HEX0_BASE,					//address location for the hex displays
+			 *PS2_ptr = (int *) PS2_PORT_DUAL_BASE				//address location for keyboard intpu
 			 *timer_ptr = (int *) INTERVAL_TIMER_BASE,			//address location for interval timer
 			 *JTAG_UART_ptr = (int *)JTAG_UART_BASE;			//address location for UART bus
 
@@ -61,7 +63,7 @@ int tick;
  for the different objects in the game*/
 
 //object player;
-const object obj_player = { 10, 0, 0, 0, 0, hp_max, 0,
+const object obj_player = { 10, 0, 0, 0, 0, 0, hp_max, 0,
 							{ { {0,0,0,0,0},
 								{0,1,0,1,0},
 								{0,0,0,0,0},
@@ -75,7 +77,7 @@ const object obj_player = { 10, 0, 0, 0, 0, hp_max, 0,
 							0 };
 
 //object obstacle 
-const object obj_obs = { 20, 0, 0, 0, 0, 0, 0,
+const object obj_obs = { 20, 0, 0, 0, 0, 0, 0, 0,
 							{ { {1,1,1,1,1},
 								{1,1,1,1,1},
 								{1,1,1,1,1},
@@ -92,12 +94,15 @@ const object obj_obs = { 20, 0, 0, 0, 0, 0, 0,
 void main()
 {
 	int SW_val,													//used to store sliding sw values, can be optimized
-		Button_val,												//used to store soft button values, can be optimized
-		lives = starting_lives,									//number of player lives
-		pt_total,												//used to hold the sum of the players points
-		counter,												//used to store the interval counter value for loading
+		button_val,												//used to store soft button values, can be optimized
+		timer,													//used to store the interval counter value for loading
 		i, j, k,												//i, j, k used for various counters									
-		new_input;												//??
+		data,													//used to store keyboard output from computer
+		lives = starting_lives,									//number of player lives
+		pt_total;												//used to hold the sum of the players points
+		
+	bool draw = 1;												//This flag tells the main loop if a redraw of the sprites is required
+
 
 
 	/*these arrays hold the color values of all news pixels when
@@ -109,202 +114,108 @@ void main()
 	
 	//This segement of code sets up the timer to run
 	*(timer_ptr) = 0;											//clears the interval timer status
-	counter = SIXTY_FPS;										//sets the new count down value
-	*(timer_ptr + 0x2) = (counter & 0xFFFF);					//loads the first half of the counter value
-	*(timer_ptr + 0x3) = (counter >> 16) & 0xFFFF;				//loads the second half of the counter value
+	timer = SIXTY_FPS;											//sets the new count down value
+	*(timer_ptr + 0x2) = (timer & 0xFFFF);						//loads the first half of the counter value
+	*(timer_ptr + 0x3) = (timer >> 16) & 0xFFFF;				//loads the second half of the counter value
 
 	//start interval timer looping, enable its interrupts
 	*(timer_ptr + 1) = 0x7;										//STOP = 0, START = 1, CONT = 1, ITO = 1 
+
+
+	//configures the PS2 port to run
+	*(PS2_ptr) = 0xFF;											//reset
+	*(PS2_ptr + 1) = 0x1; 										//write to the PS/2 Control register to enable interrupts
+
 
 	NIOS2_WRITE_IENABLE(0x01);									//set interrupt mask bits for levels 0 (IntervalTimer)
 	NIOS2_WRITE_STATUS(1);										//enable Nios II interrupts
 
 	object entities[100];
 
-	clear_screen(BLUE);
+	clear_screen(color_back);									//makes the screen the background color
 
-	new_input = *(JTAG_UART_ptr);								//reads the JTAG
+	data = *(JTAG_UART_ptr);									//Read the JTAG_UART data register
 	
-	//loads some entities for testing
-	entities[0] = obj_player;
-	entities[0].x = 25;
-	entities[0].y = 15;
-	entities[0].i = 10;
-	entities[0].j = 10;
-
-	entities[2] = obj_obs;
-	entities[2].x = 45;
-	entities[2].y = 20;
-
-	/*entities[3] = obj_obs;
-	entities[3].x = 25;
-	entities[3].y = 20;
-	entities[3].i = 0;
-	entities[3].j = 0;
-	
-	entities[4] = obj_obs;
-	entities[4].x = 25;
-	entities[4].y = 20;
-	entities[4].i = 0;
-	entities[4].j = 0;*/
-
-	for (i = 0; i < 2; i++)
-	{
-		draw_sprite(entities[i].x, entities[i].y, SPRITE_SIZE, &entities[i].sprite);
-	}
-
-	//for (i = 1; i < 6; i++)
-	//{
-	//    for (j = 0; j < ; j++)
-	//   {
-	//        draw_sprite(entities[i].x, entities[i].y, SPRITE_SIZE, &entities[i].sprite);
-	//    }
-	//}
-
+	add_sprite(obj_player, 35, 25, 0, 0, SPRITE_SIZE);			//loads player entity for at starting location
 
 	while (1)
 	{
 		while (!timeout) {}
 
-		if (new_input & pixel_buffer_start) {
-			new_input = 0x000000FF;								// the new input will be stored in the least sig dig
-		}
 
+		//reads keyboard input 10 times per second
+		if ( !(tick % 6) )
+		{
+			data = *(JTAG_UART_ptr);									//Read the JTAG_UART data register
 
-		switch (new_input) {
-
-		case W:													// moves up
-			entities[0].i = 0,
-			entities[0].j = -1,
-			entities[1].i = 0,
-			entities[1].j = -1;
-
-			//update_sprite(&entities[0].x, &entities[0].y, entities[0].i, entities[0].j, SPRITE_SIZE, &entities[0].sprite)
-			//entities[0].i = 0, perhaps to implement gravity would mean have another update back down, im not sure
-			//entities[0].j = 1,
-			//entities[1].i = 0,
-			//entities[1].j = 1;
-			break;
-
-		case A:													//moves left
-			entities[0].i = -1,
-			entities[0].j = 0,
-			entities[1].i = -1,
-			entities[1].j = 0;
-			break;
-
-		case S:													//moves down
-			entities[0].i = 0,
-			entities[0].j = 1,
-			entities[1].i = 0,
-			entities[1].j = 1;
-			break;
-
-		case D:													//moves left
-			entities[0].i = 1,
-			entities[0].j = 0,
-			entities[1].i = 1,
-			entities[1].j = 0;
-			break;
-
-		default:
-			/*Rafael I don't know what you want to have
-			happen, but I can almost garuntee this section
-			isn't going to do what you want.
-			you're doing a logical and with the value of
-			entities[0].x and entities[1].x that test will
-			evalute to true if either one is non-zero and be
-			false if both are zero.
-			I think what you want is more like:
-			(entities[0].x <= 0 && entities[1].x <= 0)
-			so you got the test on the left:
-			entities[0].x <= 0
-			and the test on the right:
-			entities[1].x <= 0
-			and your performing a logical and on the result
-			of both*/
-			if (entities[0].x <= 0) {
-				entities[0].x = 0;
+			if (data & 0x00008000)										//check RVALID to see if there is new data
+			{
+				data = data & 0x000000FF;								//the data is in the least significant byte
 			}
-			//you could replace 70 with x_res - 1 
-			//or > x_res
-			else if (entities[0].x >= _res-1)
-				entities[0].x = res_x;
+
+			//these ifs handles the keyboard input
+			switch (data)
+			{
+			case W:
+				if (entities[0].j > -MAX_VELOCITY;) { entities[0].j -= 1; }		//accelerates upward up to max velocity 
+				break;
+
+			case S:
+				if (entities[0].j > MAX_VELOCITY;) { entities[0].j += 1; }		//accelerates downward up to max velocity
+				break;
+
+			case D:
+				if (entities[0].i > -MAX_VELOCITY;) { entities[0].i -= 1; }		//accelerates rightward up to max velocity
+				break;
+
+			case A:
+				if (entities[0].i > MAX_VELOCITY;) { entities[0].i += 1; }		//accelerates leftward up to max velocity
+				break;
+
+			default:
+				break;
 			}
 			
-			else if (entities[0].y <= 0) {
-				entities[0].y = 0;
+
+			//checks to see if player avatar is at screen edge
+			//left boundary check
+			if (entities[0].x <= 0) {
+				entities[0].x = 0;										//in case avatar has overshoot corrects location
+				if (entities[0].i < 0) { entities[0].i = 0; }			//stops player if still moving left
+			}
+				
+			//right boundary check
+			else if (entities[0].x >= res_x - 1) {
+				entities[0].x = res_x - 1;								//in case avatar has overshoot corrects location
+				if (entities[0].i > 0) { entities[0].i = 0; }			//stops player if still moving left
 			}
 
-			//ditto to the 59 => y_res - 1
-			else if (entities[0] >= 59) {
-				entities[0].y = res_y;
+			//top boundary check
+			if (entities[0].y <= 0) {
+				entities[0].y = 0;										//in case avatar has overshoot corrects location
+				if (entities[0].j < 0) { entities[0].j = 0; }			//stops player if still moving up
 			}
 
-			break;
+			//bottom boundary check
+			else if (entities[0].y >= res_y) {
+				entities[0].y = res_y - 1;								//in case avatar has overshoot corrects location
+				if (entities[0].j > 0) { entities[0].j = 0; }			//stops player if still moving down
+			}
+
+
+			//redraws player sprite after input adjusts velocity
+			move_sprite(&entities[0].x, &entities[0].y, entities[0].i, entities[0].j, SPRITE_SIZE, &entities[0].sprite);
+
+			}
+
 		}
 
-		//redraws sprite after keyboard input adjusts velocity
-		update_sprite(&entities[0].x, &entities[0].y, entities[0].i, entities[0].j, SPRITE_SIZE, &entities[0].sprite);
-
-
-		//set up collision
-		if ((entities[0].x == entities[2].x && entities[0].y == entities[2].y)) {
-			remove_sprite(entities[0].x, entities[0].y, SPRITE_SIZE);
-		}
-
-
-		for (i = 0; i < 2; i++)
-		{
-			draw_sprite(entities[i].x, entities[i].y, SPRITE_SIZE, &entities[i].sprite);
-		}
-	}
-	
-
-	//Code used to test visual functions
-	/*while (1)
-	{
 		
-		if (*SW_ptr & 0x01)
-		{
-			update_sprite(&entities[0].x, &entities[0].y, entities[0].i, entities[0].j, SPRITE_SIZE, &entities[0].sprite);
-			entities[0].i = 0;
-			entities[0].j = 0;
-		}
-
-		if (*SW_ptr & 0x02)
-		{
-			remove_sprite(entities[0].x, entities[0].y, SPRITE_SIZE);
-		}
-
-		if (*SW_ptr & 0x04)
-		{
-			adv_screen_lu(new_pixels_lr, new_pixels_ud);
-		}
-
-		if (*SW_ptr & 0x08)
-		{
-			adv_screen_ld(new_pixels_lr, new_pixels_ud);
-		}
-
-		if (*SW_ptr & 0x10)
-		{
-			adv_screen_ru(new_pixels_lr, new_pixels_ud);
-		}
-
-		if (*SW_ptr & 0x20)
-		{
-			adv_screen_rd(new_pixels_lr, new_pixels_ud);
-		}
-
-		if (*SW_ptr & 0x40)
-		{
-			adv_screen_d(new_pixels_ud);
-		}
-
 	}
 	
-}*/
+	timeout = 0;
+
+}
 
 
 

@@ -15,7 +15,7 @@
 #define YELLOW 252												// 248 decimal = YELLOW
 
 
- //constants
+//constants
 #define RES_X 80												//VGA screen width size
 #define RES_Y 60												//VGA screen height size																
 #define SPRITE_SIZE 5											//used to define the size of a sprite
@@ -37,6 +37,8 @@ const int res_x = 80,											//VGA screen width size
 		  res_y = 60,											//VGA screen height size
 		  color_back = BLACK,									//Color of the background
 		  color_solid = YELLOW;									//Colr used to define solid obects
+
+int act_entities = 0;											//used to record the number of active entities
 
 //custom enum/typedef/structures
 //this enum creates boolean vars
@@ -90,6 +92,7 @@ typedef unsigned short location, health;
 typedef struct
 {
 	object_class type;											//Object class, as define by an enum
+	int object_id;												//used to identify the object 
 	location x, y;												//distance from origin [center of game grid]
 	velocity i, j;												//magnitude of objects velocity [m]
 	health hp, sp;												//objects health value & shield value
@@ -100,7 +103,7 @@ typedef struct
 
 
 
-//
+
 /*draws a single pixel at a point x, y of the desired color. The
 origin is the top left. x & y are positive int values. x is the
 distance in pixels from the left of the screen. y is the
@@ -153,7 +156,7 @@ void draw_vline(location x0, location x1, location y0, location y1, int color)
 
 
 
-//draws a rectangle of one color
+//draws a rectangle of one color using four points & a color
 void draw_rect(location x0, location x1, location y0, location y1, int color)
 {
 	int x = x0, y = y0;
@@ -166,7 +169,8 @@ void draw_rect(location x0, location x1, location y0, location y1, int color)
 
 
 /*draws a square game sprite when given x,y cordinates of the
-top left of the sprite, size, and pointer to game sprite*/
+top left of the sprite, pixel size of the sprite, and pointer to
+the sprite image.*/
 void draw_sprite(location x, location y, int size, image *sprite)
 {
 	int i, j;
@@ -178,19 +182,52 @@ void draw_sprite(location x, location y, int size, image *sprite)
 }
 
 
-void remove_sprite(location x, location y, int size)
+void erase_sprite(location x, location y, int size)
 {
 	draw_rect(x, x + size, y, y + size, color_back);
 }
 
 
 /*This function updates the screen buffer for one sprite based
-on pointers to the sprites location and the sprites velocity.*/
-void update_sprite(location *x, location *y, velocity i, velocity j, int size, image *sprite)
+on pointers to the sprites location and the sprites velocity.
+Will update the location values. Also requires the pixel size
+of the sprite, and a pointer to sprites image.*/
+void move_sprite(location *x, location *y, velocity i, velocity j, int size, image *sprite)
 {
-	remove_sprite(*x, *y, size);
+	erase_sprite(*x, *y, size);
 	*x = (int) *x + i, *y = (int) *y + j;
 	draw_sprite(*x, *y, size, sprite);
+}
+
+
+/*this function adds a sprite to the entities array, at the 
+specified location, with the specified velocity. Then draws the 
+new sprite, and increases the count of the active entities*/
+void add_sprite(object sprite, location x, location y, velocity i, velocity j, int size)
+{
+
+	entities[act_entities] = sprite,
+	entities[act_entities].x = x,
+	entities[act_entities].y = y,
+	entities[act_entities].i = i,
+	entities[act_entities].j = j;
+
+	draw_sprite(x, y, size, &entities[act_entities].sprite)
+
+	act_entities++;
+
+}
+
+
+//updates all active sprites in the entities array
+void move_all_sprites(int act_entities, object entities[])
+{
+	int i;
+
+	f	for (i = 0; i < act_entities; i++)
+	{
+		move_sprite(&entities[i].x, &entities[i].y, entities[i].i, entities[i].j, SPRITE_SIZE, &entities[i].sprite);
+	}
 }
 
 
@@ -392,4 +429,19 @@ bool gnd_chk(location x, location y)
 	}
 
 	return 0;	
+}
+
+
+
+/*This function looks at all the pixels between*/
+int collision_chk(location x, location y, velocity i, velocity j, int size)
+{
+	int i;
+
+	for (i = 0; i < SPRITE_SIZE; i++)
+	{
+		if (read_pixel(x + i, y + SPRITE_SIZE) == color_solid) { return 1; }
+	}
+
+	return 0;
 }
