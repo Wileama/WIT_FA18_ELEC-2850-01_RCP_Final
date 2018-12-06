@@ -2,6 +2,7 @@
 #include "nios2_ctrl_reg_macros.h"
 #include "game.h"
 #include <stdio.h>
+#include <string.h>
 
 
 //time values
@@ -128,9 +129,9 @@ void main()
 	entities[2].x = 45;
 	entities[2].y = 20;
 
-	/*entities[3] = obj_obs;
-	entities[3].x = 25;
-	entities[3].y = 20;
+	entities[3] = obj_obs;
+	entities[3].x = res_x;
+	/*entities[3].y = 20;
 	entities[3].i = 0;
 	entities[3].j = 0;
 	

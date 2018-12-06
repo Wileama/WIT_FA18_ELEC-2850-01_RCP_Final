@@ -393,3 +393,40 @@ bool gnd_chk(location x, location y)
 
 	return 0;	
 }
+
+
+//game functions
+/*This function moves the map*/
+void move_the_map(location *x, location *y, velocity i, velocity j, int size, image *obj_collision)
+{
+	// Random 2D array declaration
+	srand(time(0));
+	int obj_collision_array[OBSTACLE][OBSTACLE];
+	int rows, columns;
+	int random, i;
+	int randvalues[100], m = 0;
+	int t, j;
+
+
+	for (i = 0; i < 100; i++)  					//shuffle logic
+	{
+		while ((randvalues[i] % 10) >= 0 && (randvalues[i] % 10) <= 250) {
+			randvalues[i] = rand()
+				printf("%d", randvalues[i]);
+		}
+		j = i + rand() / (RAND_MAX / 100 - i) + 1);
+		t = randvalues[j];
+		randvalues[j] = randvalues[i];
+		randvalues[i] = t;
+	}
+
+	for (rows = 0; rows < 6; rows++)              //converting from 1-D to 2-D array
+	{
+		for (columns = 0; columns < 10; columns++)
+		{
+			array[rows][columns] = randvalues[m++];
+		}
+	}
+	draw_obj_collision(*x, *y, size, obj_collision);
+}
+void write_screen()
