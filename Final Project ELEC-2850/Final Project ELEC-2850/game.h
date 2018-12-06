@@ -1,5 +1,7 @@
 #pragma once
 #include <time.h>
+#include <stdlib.h>
+#include <stdio.h>
 
 
 //Predfined colors values
@@ -21,6 +23,7 @@
 #define RES_X 80												//VGA screen width size
 #define RES_Y 60												//VGA screen height size																
 #define SPRITE_SIZE 5											//used to define the size of a sprite
+#define NUM_ENTITIES 100										//used to define the max number of active entities
 
 
 /*used to define the top of the game screen. pixels on vertical 
@@ -104,7 +107,7 @@ typedef struct
 } object;
 
 
-object entities[100];											//this global array holds all info on game objects
+object entities[NUM_ENTITIES];									//this global array holds all info on game objects
 
 
 /*draws a single pixel at a point x, y of the desired color. The
@@ -203,6 +206,18 @@ void move_sprite(location *x, location *y, velocity i, velocity j, int size, ima
 }
 
 
+//updates all active sprites in the entities array
+void move_all_sprites()
+{
+	int i;
+
+	for (i = 0; i < act_entities; i++)
+	{
+		move_sprite(&entities[i].x, &entities[i].y, entities[i].i, entities[i].j, SPRITE_SIZE, &entities[i].sprite);
+	}
+}
+
+
 /*this function adds a sprite to the entities array, at the 
 specified location, with the specified velocity. Then draws the 
 new sprite, and increases the count of the active entities*/
@@ -210,7 +225,7 @@ void add_sprite(object sprite, location x, location y, velocity i, velocity j, i
 {
 
 	entities[act_entities] = sprite,
-	entities[act_entities].obj_id = time(),
+	entities[act_entities].obj_id = time(NULL),
 	entities[act_entities].x = x,
 	entities[act_entities].y = y,
 	entities[act_entities].i = i,
@@ -223,17 +238,48 @@ void add_sprite(object sprite, location x, location y, velocity i, velocity j, i
 }
 
 
-//updates all active sprites in the entities array
-void move_all_sprites(int act_entities, object entities[])
+/*This function identifies the sprite to be deleted, and erases 
+it. Then removes the sprite from the stack, and shifts every
+other entity down to fill the hole. The variable indicating the 
+number of active entities is then decremented.*/
+void delete_sprite(int object_id)
 {
 	int i;
+	bool removed = false;
 
-	for (i = 0; i < act_entities; i++)
-	{
-		move_sprite(&entities[i].x, &entities[i].y, entities[i].i, entities[i].j, SPRITE_SIZE, &entities[i].sprite);
+
+	//checks to see if the top element first
+	if (entities[act_entities].obj_id == object_id) {
+		erase_sprite(entities[act_entities].x, entities[act_entities].y, SPRITE_SIZE);
+		act_entities--;
+		return;
 	}
-}
 
+
+	/*starts at the bottom of the array and works it's way up
+	to the second to last entry.*/
+	for (i = 0; i < act_entities - 1; i++)
+	{
+		/*if the sprite has been removed remaining entries are
+		shifted down to fill the resulting hole.*/ 
+		if (removed)
+		{
+			entities[i] = entities[i + 1];
+		}
+		
+		//checks to see if this is the entitity to delete. 
+		else
+		{
+			if (entities[i].obj_id == object_id) {
+				erase_sprite(entities[i].x, entities[i].y, SPRITE_SIZE);
+				entities[i] = entities[i + 1];
+				act_entities--;
+				removed = true;
+			}
+		}
+	}
+
+}
 
 /*redraws the entire screen shifted 1 pixel to the left.
 Requires an array of new pixels to draw on the right hand side.
@@ -440,9 +486,9 @@ bool gnd_chk(location x, location y)
 /*This function looks at all the pixels between*/
 int collision_chk(location x, location y, velocity i, velocity j, int size)
 {
-	int k;
+	int a, b;
 
-	for (k = 0; k < SPRITE_SIZE; k++)
+	for (a = 0; a < SPRITE_SIZE; a++)
 	{
 		if (read_pixel(x + i + k, y + j + SPRITE_SIZE) == color_solid) { return 1; }
 	}
