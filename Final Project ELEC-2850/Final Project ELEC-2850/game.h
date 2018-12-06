@@ -1,4 +1,8 @@
 #pragma once
+#include <time.h>
+#include <stdlib.h>
+#include <stdio.h>
+
 
 //Predfined colors values
 /*color is controled by 8 bits in the following pattern:
@@ -15,10 +19,11 @@
 #define YELLOW 252												// 248 decimal = YELLOW
 
 
- //constants
+//constants
 #define RES_X 80												//VGA screen width size
 #define RES_Y 60												//VGA screen height size																
 #define SPRITE_SIZE 5											//used to define the size of a sprite
+#define NUM_ENTITIES 100										//used to define the max number of active entities
 
 
 /*used to define the top of the game screen. pixels on vertical 
@@ -26,7 +31,6 @@ row 4 and below will be the game world. pixels above this row
 will provide the player with game info like health, lives,
 points, etc.*/
 #define GAME_TOP 4
-
 
 //hardware addresses
 volatile int pixel_buffer_start = 0x08000000;					//VGA pixel buffer
@@ -36,7 +40,12 @@ volatile int pixel_buffer_start = 0x08000000;					//VGA pixel buffer
 const int res_x = 80,											//VGA screen width size
 		  res_y = 60,											//VGA screen height size
 		  color_back = BLACK,									//Color of the background
-		  color_solid = YELLOW;									//Colr used to define solid obects
+		  color_solid = WHITE,									//Color used to define solid obects
+		  color_points = GREEN,									//Color used to define bonus points
+		  color_power = RED;									//color used to define power ups
+
+int act_entities = 0;											//used to record the number of active entities
+
 
 //custom enum/typedef/structures
 //this enum creates boolean vars
@@ -90,6 +99,7 @@ typedef unsigned short location, health;
 typedef struct
 {
 	object_class type;											//Object class, as define by an enum
+	int obj_id;													//used to identify the object 
 	location x, y;												//distance from origin [center of game grid]
 	velocity i, j;												//magnitude of objects velocity [m]
 	health hp, sp;												//objects health value & shield value
@@ -99,8 +109,9 @@ typedef struct
 } object;
 
 
+object entities[NUM_ENTITIES];									//this global array holds all info on game objects
 
-//
+
 /*draws a single pixel at a point x, y of the desired color. The
 origin is the top left. x & y are positive int values. x is the
 distance in pixels from the left of the screen. y is the
@@ -153,7 +164,7 @@ void draw_vline(location x0, location x1, location y0, location y1, int color)
 
 
 
-//draws a rectangle of one color
+//draws a rectangle of one color using four points & a color
 void draw_rect(location x0, location x1, location y0, location y1, int color)
 {
 	int x = x0, y = y0;
@@ -166,7 +177,8 @@ void draw_rect(location x0, location x1, location y0, location y1, int color)
 
 
 /*draws a square game sprite when given x,y cordinates of the
-top left of the sprite, size, and pointer to game sprite*/
+top left of the sprite, pixel size of the sprite, and pointer to
+the sprite image.*/
 void draw_sprite(location x, location y, int size, image *sprite)
 {
 	int i, j;
@@ -178,21 +190,98 @@ void draw_sprite(location x, location y, int size, image *sprite)
 }
 
 
-void remove_sprite(location x, location y, int size)
+void erase_sprite(location x, location y, int size)
 {
 	draw_rect(x, x + size, y, y + size, color_back);
 }
 
 
 /*This function updates the screen buffer for one sprite based
-on pointers to the sprites location and the sprites velocity.*/
-void update_sprite(location *x, location *y, velocity i, velocity j, int size, image *sprite)
+on pointers to the sprites location and the sprites velocity.
+Will update the location values. Also requires the pixel size
+of the sprite, and a pointer to sprites image.*/
+void move_sprite(location *x, location *y, velocity i, velocity j, int size, image *sprite)
 {
-	remove_sprite(*x, *y, size);
+	erase_sprite(*x, *y, size);
 	*x = (int) *x + i, *y = (int) *y + j;
 	draw_sprite(*x, *y, size, sprite);
 }
 
+
+//updates all active sprites in the entities array
+void move_all_sprites()
+{
+	int i;
+
+	for (i = 0; i < act_entities; i++)
+	{
+		move_sprite(&entities[i].x, &entities[i].y, entities[i].i, entities[i].j, SPRITE_SIZE, &entities[i].sprite);
+	}
+}
+
+
+/*this function adds a sprite to the entities array, at the 
+specified location, with the specified velocity. Then draws the 
+new sprite, and increases the count of the active entities*/
+void add_sprite(object sprite, location x, location y, velocity i, velocity j, int size)
+{
+
+	entities[act_entities] = sprite,
+	entities[act_entities].obj_id = time(NULL),
+	entities[act_entities].x = x,
+	entities[act_entities].y = y,
+	entities[act_entities].i = i,
+	entities[act_entities].j = j;
+
+	draw_sprite(x, y, size, &entities[act_entities].sprite);
+
+	act_entities++;
+
+}
+
+
+/*This function identifies the sprite to be deleted, and erases 
+it. Then removes the sprite from the stack, and shifts every
+other entity down to fill the hole. The variable indicating the 
+number of active entities is then decremented.*/
+void delete_sprite(int object_id)
+{
+	int i;
+	bool removed = false;
+
+
+	//checks to see if the top element first
+	if (entities[act_entities].obj_id == object_id) {
+		erase_sprite(entities[act_entities].x, entities[act_entities].y, SPRITE_SIZE);
+		act_entities--;
+		return;
+	}
+
+
+	/*starts at the bottom of the array and works it's way up
+	to the second to last entry.*/
+	for (i = 0; i < act_entities - 1; i++)
+	{
+		/*if the sprite has been removed remaining entries are
+		shifted down to fill the resulting hole.*/ 
+		if (removed)
+		{
+			entities[i] = entities[i + 1];
+		}
+		
+		//checks to see if this is the entitity to delete. 
+		else
+		{
+			if (entities[i].obj_id == object_id) {
+				erase_sprite(entities[i].x, entities[i].y, SPRITE_SIZE);
+				entities[i] = entities[i + 1];
+				act_entities--;
+				removed = true;
+			}
+		}
+	}
+
+}
 
 /*redraws the entire screen shifted 1 pixel to the left.
 Requires an array of new pixels to draw on the right hand side.
@@ -395,38 +484,39 @@ bool gnd_chk(location x, location y)
 }
 
 
-//game functions
-/*This function moves the map*/
-void move_the_map(location *x, location *y, velocity i, velocity j, int size, image *obj_collision)
+
+/*This function looks at all the pixels between the avatar and  
+it's destination. This is done by reading the pixel values of   
+two rectangles. Pixel color detefines the interation.*/
+int collision_chk(location x, location y, velocity i, velocity j, int size)
 {
-	// Random 2D array declaration
-	srand(time(0));
-	int obj_collision_array[OBSTACLE][OBSTACLE];
-	int rows, columns;
-	int random, i;
-	int randvalues[100], m = 0;
-	int t, j;
+	int a, b, collision;
 
-
-	for (i = 0; i < 100; i++)  					//shuffle logic
+	for (a = x + SPRITE_SIZE; a < x + SPRITE_SIZE + i; a++)
 	{
-		while ((randvalues[i] % 10) >= 0 && (randvalues[i] % 10) <= 250) {
-			randvalues[i] = rand()
-				printf("%d", randvalues[i]);
-		}
-		j = i + rand() / (RAND_MAX / 100 - i) + 1);
-		t = randvalues[j];
-		randvalues[j] = randvalues[i];
-		randvalues[i] = t;
-	}
-
-	for (rows = 0; rows < 6; rows++)              //converting from 1-D to 2-D array
-	{
-		for (columns = 0; columns < 10; columns++)
+		for (b = y + j; b < y + SPRITE_SIZE + j; b++)
 		{
-			array[rows][columns] = randvalues[m++];
+			if (read_pixel(a, b) == color_solid) { collision & 0x0001; }
+
+			else if (read_pixel(a, b) == color_points) { collision & 0x0002; }
+
+			else if (read_pixel(a, b) == color_power) { collision & 0x0004; }
 		}
+
 	}
-	draw_obj_collision(*x, *y, size, obj_collision);
+	
+	for (a = x + i; a < x + SPRITE_SIZE + i; a++)
+	{
+		for (b = y + SPRITE_SIZE + j; b < y + SPRITE_SIZE + j; b++)
+		{
+			if (read_pixel(a, b) == color_solid) { collision & 0x0001; }
+			
+			else if (read_pixel(a, b) == color_points) { collision & 0x0002; }
+				
+			else if (read_pixel(a, b) == color_power) { collision & 0x0004; }
+		}
+
+	}
+
+	return collision;
 }
-void write_screen()
