@@ -5,8 +5,14 @@
 
 
 //time values
-#define ONESEC 0x02FAF080										//1/(50 MHz) x (0x02FAF080) = 1 sec
-#define FOURTHSEC 0x00BEBC20									//1/(50 MHz) x (0x00BEBC20) = 250 msec
+#define ONESEC			0x02FAF080								//1/(50 MHz) x (0x02FAF080) = 1 sec
+#define HALFSEC			0x017D7840								//1/(50 MHz) x (0x017D7840) = 500 msec
+#define FOURTHSEC		0x00BEBC20								//1/(50 MHz) x (0x00BEBC20) = 250 msec
+#define EIGHTHSEC		0x005F5E10								//1/(50 MHz) x (0x005F5E10) = 125 msec
+#define SIXTY_FPS		0x000CB736								//1/(50 MHz) x (0x000CB736) ~= 1 / 60 sec = 16.666 msec
+#define THIRTY_FPS		0x00196E6B								//1/(50 MHz) x (0x00196E6B) ~= 1 / 30 sec = 33.333 msec
+#define TWENTY_FOUR_FPS 0x001FCA05								//1/(50 MHz) x (0x001FCA05) ~= 1 / 24 sec = 41.666 msec
+
 
 
 //Keyboard Values
@@ -29,12 +35,26 @@ volatile int *LED_ptr = (int *) GREEN_LED_BASE,					//address location for green
 			 *button_ptr = (int *) PUSHBUTTON_BASE,				//address location for push buttons
 			 *hex_ptr = (int *) HEX3_HEX0_BASE,					//address location for the hex displays
 			 *timer_ptr = (int *) INTERVAL_TIMER_BASE,			//address location for interval timer
-			 *JTAG_UART_ptr = (int *)JTAG_UART_BASE;	        //address location for UART bus
+			 *JTAG_UART_ptr = (int *)JTAG_UART_BASE;			//address location for UART bus
 
 
 
 //Variables
-bool fps = 0;													//This variable is used by timer and ISR
+/*This variable is used to limit the program to running no more
+than once per tick. Set true by the interval timer ISR, and is 
+reset once the main loop has completed.*/
+bool timeout;													
+
+
+/*The variable ticks is used to divide up time for the program.
+Different functions can thus run at different paces. The ticks
+counter ranges from 0 to 59, providing 60 subdivisions of a
+second. Therefore 1 tick = 16.666 msec.
+if(!(tick%#)) will be true 60/# times per second, with # between
+ticks. Real time = # * 16.666 msec. # should range from 2 to 59
+tick is updated by the system clock using the
+interval_timer_ISR().*/
+int tick;														 
 
 
 /*These constants are used to define the std starting values
@@ -87,15 +107,9 @@ void main()
 		new_pixels_ud[RES_X] = { BLUE };
 
 	
-	/*my thoughts here are to use the timer to count our frames
-	per second, or how many times we are refreshing the entire
-	screen. Basically every time the main while loop iterates it
-	increments a counter. Once the timer interupts, that counter
-	is sent to the hex display. Showing off, and giving us an
-	idea of how fast our code is.*/
 	//This segement of code sets up the timer to run
 	*(timer_ptr) = 0;											//clears the interval timer status
-	counter = ONESEC;											//sets the new count down value
+	counter = SIXTY_FPS;										//sets the new count down value
 	*(timer_ptr + 0x2) = (counter & 0xFFFF);					//loads the first half of the counter value
 	*(timer_ptr + 0x3) = (counter >> 16) & 0xFFFF;				//loads the second half of the counter value
 
@@ -150,6 +164,8 @@ void main()
 
 	while (1)
 	{
+		while (!timeout) {}
+
 		if (new_input & pixel_buffer_start) {
 			new_input = 0x000000FF;								// the new input will be stored in the least sig dig
 		}
@@ -300,7 +316,8 @@ void interval_timer_ISR()
 	volatile int * SW_ptr = (int *)0x10000040;
 
 	*(timer_ptr) = 0; 											//clear the interrupt
-	fps = 1;													
+	timeout = 1, tick = (tick + 1) % 60;						//sets time out true, and increments tick from 0 to 59
+
 
 	return;
 }
