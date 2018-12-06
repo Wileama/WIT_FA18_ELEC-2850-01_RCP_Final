@@ -40,7 +40,7 @@ volatile int pixel_buffer_start = 0x08000000;					//VGA pixel buffer
 const int res_x = 80,											//VGA screen width size
 		  res_y = 60,											//VGA screen height size
 		  color_back = BLACK,									//Color of the background
-		  color_solid = YELLOW,									//Color used to define solid obects
+		  color_solid = WHITE,									//Color used to define solid obects
 		  color_points = GREEN,									//Color used to define bonus points
 		  color_power = RED;									//color used to define power ups
 
@@ -496,21 +496,11 @@ int collision_chk(location x, location y, velocity i, velocity j, int size)
 	{
 		for (b = y + j; b < y + SPRITE_SIZE + j; b++)
 		{
-			switch (read_pixel(a, b))
-			{
-				case color_solid:
-					 collision & 0x0001;
-					 break;
+			if (read_pixel(a, b) == color_solid) { collision & 0x0001; }
 
-				case color_points:
-					 collision & 0x0002;
-					 break;
+			else if (read_pixel(a, b) == color_points) { collision & 0x0002; }
 
-				case color_power:
-					 collision & 0x0004;
-					 break;
-			}
-
+			else if (read_pixel(a, b) == color_power) { collision & 0x0004; }
 		}
 
 	}
@@ -519,21 +509,11 @@ int collision_chk(location x, location y, velocity i, velocity j, int size)
 	{
 		for (b = y + SPRITE_SIZE + j; b < y + SPRITE_SIZE + j; b++)
 		{
-			switch (read_pixel(a, b))
-			{
-				case color_solid:
-					 collision & 0x0001;
-					 break;
+			if (read_pixel(a, b) == color_solid) { collision & 0x0001; }
+			
+			else if (read_pixel(a, b) == color_points) { collision & 0x0002; }
 				
-				case color_points:
-					 collision & 0x0002;
-				 	 break;
-
-				case color_power:
-					 collision & 0x0004;
-					 break;
-			}
-
+			else if (read_pixel(a, b) == color_power) { collision & 0x0004; }
 		}
 
 	}
