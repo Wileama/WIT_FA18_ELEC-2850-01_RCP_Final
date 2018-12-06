@@ -1,4 +1,6 @@
 #pragma once
+#include <time.h>
+
 
 //Predfined colors values
 /*color is controled by 8 bits in the following pattern:
@@ -27,7 +29,6 @@ will provide the player with game info like health, lives,
 points, etc.*/
 #define GAME_TOP 4
 
-
 //hardware addresses
 volatile int pixel_buffer_start = 0x08000000;					//VGA pixel buffer
 
@@ -39,6 +40,7 @@ const int res_x = 80,											//VGA screen width size
 		  color_solid = YELLOW;									//Colr used to define solid obects
 
 int act_entities = 0;											//used to record the number of active entities
+
 
 //custom enum/typedef/structures
 //this enum creates boolean vars
@@ -92,7 +94,7 @@ typedef unsigned short location, health;
 typedef struct
 {
 	object_class type;											//Object class, as define by an enum
-	int object_id;												//used to identify the object 
+	int obj_id;													//used to identify the object 
 	location x, y;												//distance from origin [center of game grid]
 	velocity i, j;												//magnitude of objects velocity [m]
 	health hp, sp;												//objects health value & shield value
@@ -102,6 +104,7 @@ typedef struct
 } object;
 
 
+object entities[100];											//this global array holds all info on game objects
 
 
 /*draws a single pixel at a point x, y of the desired color. The
@@ -207,12 +210,13 @@ void add_sprite(object sprite, location x, location y, velocity i, velocity j, i
 {
 
 	entities[act_entities] = sprite,
+	entities[act_entities].obj_id = time(),
 	entities[act_entities].x = x,
 	entities[act_entities].y = y,
 	entities[act_entities].i = i,
 	entities[act_entities].j = j;
 
-	draw_sprite(x, y, size, &entities[act_entities].sprite)
+	draw_sprite(x, y, size, &entities[act_entities].sprite);
 
 	act_entities++;
 
@@ -224,7 +228,7 @@ void move_all_sprites(int act_entities, object entities[])
 {
 	int i;
 
-	f	for (i = 0; i < act_entities; i++)
+	for (i = 0; i < act_entities; i++)
 	{
 		move_sprite(&entities[i].x, &entities[i].y, entities[i].i, entities[i].j, SPRITE_SIZE, &entities[i].sprite);
 	}
@@ -436,11 +440,11 @@ bool gnd_chk(location x, location y)
 /*This function looks at all the pixels between*/
 int collision_chk(location x, location y, velocity i, velocity j, int size)
 {
-	int i;
+	int k;
 
-	for (i = 0; i < SPRITE_SIZE; i++)
+	for (k = 0; k < SPRITE_SIZE; k++)
 	{
-		if (read_pixel(x + i, y + SPRITE_SIZE) == color_solid) { return 1; }
+		if (read_pixel(x + i + k, y + j + SPRITE_SIZE) == color_solid) { return 1; }
 	}
 
 	return 0;

@@ -35,7 +35,7 @@ volatile int *LED_ptr = (int *) GREEN_LED_BASE,					//address location for green
 			 *SW_ptr = (int *) SLIDER_SWITCH_BASE,				//address location for sliding switches
 			 *button_ptr = (int *) PUSHBUTTON_BASE,				//address location for push buttons
 			 *hex_ptr = (int *) HEX3_HEX0_BASE,					//address location for the hex displays
-			 *PS2_ptr = (int *) PS2_PORT_DUAL_BASE				//address location for keyboard intpu
+			 *PS2_ptr = (int *) PS2_PORT_DUAL_BASE,				//address location for keyboard intpu
 			 *timer_ptr = (int *) INTERVAL_TIMER_BASE,			//address location for interval timer
 			 *JTAG_UART_ptr = (int *)JTAG_UART_BASE;			//address location for UART bus
 
@@ -102,8 +102,8 @@ void main()
 		pt_total;												//used to hold the sum of the players points
 		
 	bool draw = 1;												//This flag tells the main loop if a redraw of the sprites is required
-
-
+	
+	timeout = false;											//this flag set to false for the first iteration of the program
 
 	/*these arrays hold the color values of all news pixels when
 	moving the entire screen left, right, up or down.
@@ -118,102 +118,99 @@ void main()
 	*(timer_ptr + 0x2) = (timer & 0xFFFF);						//loads the first half of the counter value
 	*(timer_ptr + 0x3) = (timer >> 16) & 0xFFFF;				//loads the second half of the counter value
 
-	//start interval timer looping, enable its interrupts
-	*(timer_ptr + 1) = 0x7;										//STOP = 0, START = 1, CONT = 1, ITO = 1 
-
-
-	//configures the PS2 port to run
-	*(PS2_ptr) = 0xFF;											//reset
-	*(PS2_ptr + 1) = 0x1; 										//write to the PS/2 Control register to enable interrupts
-
-
 	NIOS2_WRITE_IENABLE(0x01);									//set interrupt mask bits for levels 0 (IntervalTimer)
 	NIOS2_WRITE_STATUS(1);										//enable Nios II interrupts
 
-	object entities[100];
+	//start interval timer looping, enable its interrupts
+	*(timer_ptr + 1) = 0x7;										//STOP = 0, START = 1, CONT = 1, ITO = 1 
+
 
 	clear_screen(color_back);									//makes the screen the background color
 
 	data = *(JTAG_UART_ptr);									//Read the JTAG_UART data register
 	
-	add_sprite(obj_player, 35, 25, 0, 0, SPRITE_SIZE);			//loads player entity for at starting location
+	add_sprite(obj_player, 35, 25, 1, 0, SPRITE_SIZE);			//loads player entity for at starting location
 
 	while (1)
 	{
-		while (!timeout) {}
+		//this text for debugging
+		printf("main loop reset\n");
 
-
+		while (!timeout) { 
+		};
+		timeout = false;
+		
+		//this text for debugging
+		printf("\t\ttimeout: %d\n", (int)timeout);
+		printf("timeout loop exited\n");
+		
 		//reads keyboard input 10 times per second
-		if ( !(tick % 6) )
-		{
-			data = *(JTAG_UART_ptr);									//Read the JTAG_UART data register
+		//if (!(tick % 6))
+		//{
 
-			if (data & 0x00008000)										//check RVALID to see if there is new data
-			{
-				data = data & 0x000000FF;								//the data is in the least significant byte
-			}
+		//	printf("1/10 of a second!\n");
+		//	//redraws player sprite after input adjusts velocity
+		//	move_sprite(&entities[0].x, &entities[0].y, entities[0].i, entities[0].j, SPRITE_SIZE, &entities[0].sprite);
 
-			//these ifs handles the keyboard input
-			switch (data)
-			{
-			case W:
-				if (entities[0].j > -MAX_VELOCITY;) { entities[0].j -= 1; }		//accelerates upward up to max velocity 
-				break;
+		//	data = *(JTAG_UART_ptr);							//Read the JTAG_UART data register
 
-			case S:
-				if (entities[0].j > MAX_VELOCITY;) { entities[0].j += 1; }		//accelerates downward up to max velocity
-				break;
+		//	if (data & 0x00008000)								//check RVALID to see if there is new data
+		//	{
+		//		data = data & 0x000000FF;						//the data is in the least significant byte
+		//		printf("data: %d", data);
+		//	}
 
-			case D:
-				if (entities[0].i > -MAX_VELOCITY;) { entities[0].i -= 1; }		//accelerates rightward up to max velocity
-				break;
+		//	//these ifs handles the keyboard input
+		//	switch (data)
+		//	{
+		//		case W:
+		//		if (entities[0].j > -MAX_VELOCITY) { entities[0].j -= 1; }		//accelerates upward up to max velocity 
+		//		break;
 
-			case A:
-				if (entities[0].i > MAX_VELOCITY;) { entities[0].i += 1; }		//accelerates leftward up to max velocity
-				break;
+		//		case S:
+		//		if (entities[0].j > MAX_VELOCITY) { entities[0].j += 1; }		//accelerates downward up to max velocity
+		//		break;
 
-			default:
-				break;
-			}
-			
+		//		case D:
+		//		if (entities[0].i > -MAX_VELOCITY) { entities[0].i -= 1; }		//accelerates rightward up to max velocity
+		//		break;
 
-			//checks to see if player avatar is at screen edge
-			//left boundary check
-			if (entities[0].x <= 0) {
-				entities[0].x = 0;										//in case avatar has overshoot corrects location
-				if (entities[0].i < 0) { entities[0].i = 0; }			//stops player if still moving left
-			}
-				
-			//right boundary check
-			else if (entities[0].x >= res_x - 1) {
-				entities[0].x = res_x - 1;								//in case avatar has overshoot corrects location
-				if (entities[0].i > 0) { entities[0].i = 0; }			//stops player if still moving left
-			}
-
-			//top boundary check
-			if (entities[0].y <= 0) {
-				entities[0].y = 0;										//in case avatar has overshoot corrects location
-				if (entities[0].j < 0) { entities[0].j = 0; }			//stops player if still moving up
-			}
-
-			//bottom boundary check
-			else if (entities[0].y >= res_y) {
-				entities[0].y = res_y - 1;								//in case avatar has overshoot corrects location
-				if (entities[0].j > 0) { entities[0].j = 0; }			//stops player if still moving down
-			}
+		//		case A:
+		//		if (entities[0].i > MAX_VELOCITY) { entities[0].i += 1; }		//accelerates leftward up to max velocity
+		//		break;			
+		//	}
 
 
-			//redraws player sprite after input adjusts velocity
-			move_sprite(&entities[0].x, &entities[0].y, entities[0].i, entities[0].j, SPRITE_SIZE, &entities[0].sprite);
+		//	//checks to see if player avatar is at screen edge
+		//	//left boundary check
+		//	if (entities[0].x <= 0) {
+		//		entities[0].x = 0;										//in case avatar has overshoot corrects location
+		//		if (entities[0].i < 0) { entities[0].i = 0; }			//stops player if still moving left
+		//	}
 
-			}
+		//	//right boundary check
+		//	else if (entities[0].x >= res_x - SPRITE_SIZE) {
+		//		entities[0].x = res_x - SPRITE_SIZE;					//in case avatar has overshoot corrects location
+		//		if (entities[0].i > 0) { entities[0].i = 0; }			//stops player if still moving left
+		//	}
 
-		}
+		//	//top boundary check
+		//	if (entities[0].y <= 0) {
+		//		entities[0].y = 0;										//in case avatar has overshoot corrects location
+		//		if (entities[0].j < 0) { entities[0].j = 0; }			//stops player if still moving up
+		//	}
+
+		//	//bottom boundary check
+		//	else if (entities[0].y >= res_y - SPRITE_SIZE) {
+		//		entities[0].y = res_y - SPRITE_SIZE;					//in case avatar has overshoot corrects location
+		//		if (entities[0].j > 0) { entities[0].j = 0; }			//stops player if still moving down
+		//	}
+		//	
+		//}
+		
+		
 			
 	}
-	
-	timeout = 0;
-
 }
 
 
@@ -223,11 +220,13 @@ timer generates an interrupt. In previous work it was stored in a
 seperate file. Here it is combined int to the main function.*/
 void interval_timer_ISR()
 {
-	volatile int * SW_ptr = (int *)0x10000040;
-
+	
 	*(timer_ptr) = 0; 											//clear the interrupt
-	timeout = 1, tick = (tick + 1) % 60;						//sets time out true, and increments tick from 0 to 59
+	timeout = true;												//sets timeout true 
+	tick = (tick + 1) % 60;										//increments tick from 0 to 59
 
+	//this text for debugging
+	printf("tick value: %d\ttimeout: %d\n", tick, (int) timeout);
 
 	return;
 }
