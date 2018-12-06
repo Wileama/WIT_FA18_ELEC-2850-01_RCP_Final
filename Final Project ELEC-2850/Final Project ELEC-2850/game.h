@@ -40,7 +40,9 @@ volatile int pixel_buffer_start = 0x08000000;					//VGA pixel buffer
 const int res_x = 80,											//VGA screen width size
 		  res_y = 60,											//VGA screen height size
 		  color_back = BLACK,									//Color of the background
-		  color_solid = YELLOW;									//Colr used to define solid obects
+		  color_solid = WHITE,									//Color used to define solid obects
+		  color_points = GREEN,									//Color used to define bonus points
+		  color_power = RED;									//color used to define power ups
 
 int act_entities = 0;											//used to record the number of active entities
 
@@ -483,15 +485,38 @@ bool gnd_chk(location x, location y)
 
 
 
-/*This function looks at all the pixels between*/
+/*This function looks at all the pixels between the avatar and  
+it's destination. This is done by reading the pixel values of   
+two rectangles. Pixel color detefines the interation.*/
 int collision_chk(location x, location y, velocity i, velocity j, int size)
 {
-	int a, b;
+	int a, b, collision;
 
-	for (a = 0; a < SPRITE_SIZE; a++)
+	for (a = x + SPRITE_SIZE; a < x + SPRITE_SIZE + i; a++)
 	{
-		if (read_pixel(x + i + k, y + j + SPRITE_SIZE) == color_solid) { return 1; }
+		for (b = y + j; b < y + SPRITE_SIZE + j; b++)
+		{
+			if (read_pixel(a, b) == color_solid) { collision & 0x0001; }
+
+			else if (read_pixel(a, b) == color_points) { collision & 0x0002; }
+
+			else if (read_pixel(a, b) == color_power) { collision & 0x0004; }
+		}
+
+	}
+	
+	for (a = x + i; a < x + SPRITE_SIZE + i; a++)
+	{
+		for (b = y + SPRITE_SIZE + j; b < y + SPRITE_SIZE + j; b++)
+		{
+			if (read_pixel(a, b) == color_solid) { collision & 0x0001; }
+			
+			else if (read_pixel(a, b) == color_points) { collision & 0x0002; }
+				
+			else if (read_pixel(a, b) == color_power) { collision & 0x0004; }
+		}
+
 	}
 
-	return 0;
+	return collision;
 }

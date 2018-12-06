@@ -77,7 +77,7 @@ const object obj_player = { 10, 0, 0, 0, 0, 0, hp_max, 0,
 							0 };
 
 //object obstacle 
-const object obj_obs = { 20, 0, 0, 0, 0, 0, 0, 0,
+const object obj_obs1 = { 20, 0, 0, 0, 0, 0, 0, 0,
 							{ { {1,1,1,1,1},
 								{1,1,1,1,1},
 								{1,1,1,1,1},
@@ -89,6 +89,22 @@ const object obj_obs = { 20, 0, 0, 0, 0, 0, 0, 0,
 								{YELLOW,YELLOW,YELLOW,YELLOW,YELLOW},
 								{YELLOW,YELLOW,YELLOW,YELLOW,YELLOW} } },
 							10 };
+
+
+
+const object obj_obs2 = { 20, 0, 0, 0, 0, 0, 0, 0,
+							{ { {0,0,1,0,0},
+								{0,1,1,1,0},
+								{1,1,1,1,1},
+								{0,1,1,1,0},
+								{0,0,1,0,0} } },
+							{ { {BLACK ,BLACK ,YELLOW,BLACK ,BLACK },
+								{BLACK ,YELLOW,YELLOW,YELLOW,BLACK },
+								{YELLOW,YELLOW,YELLOW,YELLOW,YELLOW},
+								{BLACK ,YELLOW,YELLOW,YELLOW,BLACK },
+								{BLACK ,BLACK ,YELLOW,BLACK ,BLACK } } },
+							10 };
+
 
 
 //function prototypes
@@ -121,6 +137,9 @@ void main()
 	data = *(JTAG_UART_ptr);									//Read the JTAG_UART data register
 	
 	add_sprite(obj_player, 35, 25, 0, 0, SPRITE_SIZE);			//loads player entity for at starting location
+	add_sprite(obj_obs1, 10, 10, 0, 0, SPRITE_SIZE);
+	add_sprite(obj_obs2, 50, 50, 0, 0, SPRITE_SIZE);
+
 
 	//This segement of code sets up the timer to run
 	*(timer_ptr) = 0;											//clears the interval timer status
@@ -161,23 +180,21 @@ void main()
 			//these ifs handles the keyboard input
 			switch (data)
 			{
-			case W:
-				if (entities[0].j > -MAX_VELOCITY) { entities[0].j = entities[0].j - 1; }		//accelerates upward up to max velocity
-				break;
+				case W:
+					if (entities[0].j > -MAX_VELOCITY) { entities[0].j = entities[0].j - 1; }		//accelerates upward up to max velocity
+					break;
 
-			case S:
-				if (entities[0].j < MAX_VELOCITY) { entities[0].j = entities[0].j + 1; }		//accelerates downward up to max velocity
-				break;
+				case S:
+					if (entities[0].j < MAX_VELOCITY) { entities[0].j = entities[0].j + 1; }		//accelerates downward up to max velocity
+					break;
 
-			case A:
-				if (entities[0].i > -MAX_VELOCITY) { entities[0].i = entities[0].i - 1; }		//accelerates leftward up to max velocity
-				break;
+				case A:
+					if (entities[0].i > -MAX_VELOCITY) { entities[0].i = entities[0].i - 1; }		//accelerates leftward up to max velocity
+					break;
 
-
-			case D:
-				if (entities[0].i < MAX_VELOCITY) { entities[0].i = entities[0].i + 1; }		//accelerates rightward up to max velocity
-				break;
-
+				case D:
+					if (entities[0].i < MAX_VELOCITY) { entities[0].i = entities[0].i + 1; }		//accelerates rightward up to max velocity
+					break;
 			}
 
 			//These checks to see if player avatar is at screen edge
