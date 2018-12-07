@@ -304,12 +304,3 @@ void interval_timer_ISR()
 
 	return;
 }
-
-char* fullstring = "Health", char* fullstring2 = "Points", x1_start = RES_X, x2_start = RES_X, y1_start=0;
-
-writeText(x1_start,y1_start,fullstring);
-writeText2(x2_start,y1_start,fullstring2)
-
-
-
-
