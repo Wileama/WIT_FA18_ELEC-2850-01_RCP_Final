@@ -141,6 +141,7 @@ const object obj_obst[4] = { { 20, 0, 35, 25, 0, 0, 0, 0,
 void delay(volatile int);										//used to create a time delay using a for loop
 void interval_timer_ISR();										//this code is executed whenever the interval timer generates an interrupt
 void rand_sprite();												//this function generates a random sprite for the player to dodge
+void death();
 
 
 void main()
@@ -193,8 +194,8 @@ void main()
 		 until the timer has completed a countdown*/
 		while ((*(timer_ptr) & 1) == 0) {}
 		
-		*(timer_ptr) = 0;											//clears countdown flag
-		tick = (tick + 1) % 60;										//increments tick from 0 to 59
+		*(timer_ptr) = 0;										//clears countdown flag
+		tick = (tick + 1) % 60;									//increments tick from 0 to 59
 		
 
 		if(!(tick % speed)){
@@ -209,6 +210,7 @@ void main()
 
 		if (!(tick % 20)) {
 			move_all_obstacle();
+			update_HUD(lives, entities[0].points);
 		}
 
 		
@@ -285,9 +287,7 @@ void main()
 			
 			collision = collision_chk(entities[0].x, entities[0].y, entities[0].i, entities[0].j);
 			
-			if ((collision & 0x01) == 1 ) {
-				entities[0].i = 0, entities[0].j = 0, entities[0].sprite = obj_player[1].sprite;
-			}
+			if ((collision & 0x01) == 1) { lives--; death(lives);  }
 			
 			//redraws player sprite after input adjusts velocity
 			move_sprite(&entities[0].x, &entities[0].y, entities[0].i, entities[0].j, &entities[0].sprite);
@@ -309,11 +309,46 @@ void delay(volatile int time) {
 /*This function randomally add sprites from the left hand side
 with a random amount of left momentium.*/
 void rand_sprite()
-{
-	
+{	
 	add_sprite(obj_obst[rand() % 4], RES_X, (rand() % (RES_Y - GAME_TOP)) + GAME_TOP, -(rand() % 5 + 1), 0);
 }
 
+
+void death(int lives)
+{
+	int	next_tick = (tick + 30) % 60,
+		cycles = 0,
+		i;
+
+	int new_pixels_lr[RES_Y - GAME_TOP] = { BLACK },
+		new_pixels_ud[RES_X] = { BLACK };
+
+
+	while (cycles < 4)
+	{
+		while ((*(timer_ptr) & 1) == 0) {}							//keeps program waitting until timer counts down
+		*(timer_ptr) = 0;											//clears countdown flag
+		tick = (tick + 1) % 60;										//increments tick from 0 to 59
+		
+		if (tick == next_tick)
+		{
+			entities[0].i = 0, entities[0].j = 0, entities[0].sprite = obj_player[(cycles + 1) % 2].sprite;
+			draw_sprite(entities[0].x, entities[0].y, &entities[0].sprite);
+			next_tick = (tick + 30) % 60;
+			cycles++;
+		}
+	}
+
+
+	for (i = 0; i < RES_Y; i++) { adv_screen_lu(new_pixels_lr, new_pixels_ud); }
+	
+	act_entities = 1;
+	clear_screen(BLACK);
+	create_hud(lives, entities[0].points);
+	entities[0].x = obj_player[0].x, entities[0].y = obj_player[0].y, entities[0].sprite = obj_player[0].sprite;
+	draw_sprite(entities[0].x, entities[0].y, &entities[0].sprite);
+		
+}
 
 /*this function is called by the exception handler when the interval
 timer generates an interrupt. In previous work it was stored in a

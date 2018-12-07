@@ -19,6 +19,7 @@
         </source_files>
         <options>
             <compiler_flags>-g -O1 -ffunction-sections -fverbose-asm -fno-inline -mno-cache-volatile</compiler_flags>
+            <linker_flags>-lm</linker_flags>
             <emulate_unimpl_instructions>true</emulate_unimpl_instructions>
             <use_small_c_library>false</use_small_c_library>
         </options>
