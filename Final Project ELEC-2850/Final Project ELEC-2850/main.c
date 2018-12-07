@@ -63,7 +63,7 @@ int tick = 0;
  for the different objects in the game*/
 
 //object player;
-const object obj_player = { 10, 0, 0, 0, 0, 0, hp_max, 0,
+const object obj_player_a = { 10, 0, 35, 25, 0, 0, hp_max, 0,
 							{ { {0,0,0,0,0},
 								{0,1,0,1,0},
 								{0,0,0,0,0},
@@ -76,18 +76,31 @@ const object obj_player = { 10, 0, 0, 0, 0, 0, hp_max, 0,
 								{BLUE, BLUE, BLUE, BLUE, BLUE} } },
 							0 };
 
+const object obj_player_d = { 10, 0, 0, 0, 0, 0, hp_max, 0,
+							{ { {0,0,0,0,0},
+								{0,1,0,1,0},
+								{0,0,0,0,0},
+								{0,1,1,1,0},
+								{0,0,0,0,0} } },
+							{ { {RED,  RED,  RED,  RED,  RED },
+								{RED,  BLUE, BLUE, BLUE, RED },
+								{RED,  RED,  RED,  RED,  RED },
+								{RED,  BLUE, BLUE, BLUE, RED },
+								{RED,  RED,  RED,  RED,  RED } } },
+							0 };
+
 //object obstacle 
-const object obj_obs1 = { 20, 0, 0, 0, 0, 0, 0, 0,
+const object obj_obs1 = { 20, 0, 35, 25, 0, 0, 0, 0,
 							{ { {1,1,1,1,1},
 								{1,1,1,1,1},
 								{1,1,1,1,1},
 								{1,1,1,1,1},
 								{1,1,1,1,1} } },
-							{ { {YELLOW,YELLOW,YELLOW,YELLOW,YELLOW},
-								{YELLOW,YELLOW,YELLOW,YELLOW,YELLOW},
-								{YELLOW,YELLOW,YELLOW,YELLOW,YELLOW},
-								{YELLOW,YELLOW,YELLOW,YELLOW,YELLOW},
-								{YELLOW,YELLOW,YELLOW,YELLOW,YELLOW} } },
+							{ { {WHITE, WHITE, WHITE, WHITE, WHITE},
+								{WHITE, WHITE, WHITE, WHITE, WHITE},
+								{WHITE, WHITE, WHITE, WHITE, WHITE},
+								{WHITE, WHITE, WHITE, WHITE, WHITE},
+								{WHITE, WHITE, WHITE, WHITE, WHITE} } },
 							10 };
 
 
@@ -98,11 +111,11 @@ const object obj_obs2 = { 20, 0, 0, 0, 0, 0, 0, 0,
 								{1,1,1,1,1},
 								{0,1,1,1,0},
 								{0,0,1,0,0} } },
-							{ { {BLACK ,BLACK ,YELLOW,BLACK ,BLACK },
-								{BLACK ,YELLOW,YELLOW,YELLOW,BLACK },
-								{YELLOW,YELLOW,YELLOW,YELLOW,YELLOW},
-								{BLACK ,YELLOW,YELLOW,YELLOW,BLACK },
-								{BLACK ,BLACK ,YELLOW,BLACK ,BLACK } } },
+							{ { {BLACK, BLACK, WHITE, BLACK, BLACK},
+								{BLACK, WHITE, WHITE, WHITE, BLACK},
+								{WHITE, WHITE, WHITE, WHITE, WHITE},
+								{BLACK, WHITE, WHITE, WHITE, BLACK},
+								{BLACK, BLACK, WHITE, BLACK, BLACK} } },
 							10 };
 
 
@@ -119,7 +132,7 @@ void main()
 		timer,													//used to store the interval counter value for loading
 		i, j, k,												//i, j, k used for various counters									
 		data,													//used to store keyboard output from computer
-		temp,
+		collision,												//used to store collision code
 		lives = starting_lives,									//number of player lives
 		pt_total;												//used to hold the sum of the players points
 		
@@ -132,13 +145,13 @@ void main()
 		new_pixels_ud[RES_X] = { BLUE };
 
 	clear_screen(color_back);									//makes the screen the background color
-	draw_rect(0, res_x - 1, 0, GAME_TOP, BLUE);
+	draw_rect(0, res_x, 0, GAME_TOP, BLUE);
 
 	data = *(JTAG_UART_ptr);									//Read the JTAG_UART data register
 	
-	add_sprite(obj_player, 35, 25, 0, 0, SPRITE_SIZE);			//loads player entity for at starting location
-	add_sprite(obj_obs1, 10, 10, 0, 0, SPRITE_SIZE);
-	add_sprite(obj_obs2, 50, 50, 0, 0, SPRITE_SIZE);
+	add_sprite(obj_player_a, obj_player_a.x, obj_player_a.y, 0, 0);			//loads player entity for at starting location
+	add_sprite(obj_obs1, 10, 10, 0, 0);
+	add_sprite(obj_obs2, 50, 50, 0, 0);
 
 
 	//This segement of code sets up the timer to run
@@ -230,9 +243,23 @@ void main()
 			if (entities[0].y == res_y - SPRITE_SIZE && entities[0].j > 0) { entities[0].j = 0; }
 			
 
-			//redraws player sprite after input adjusts velocity
-			move_sprite(&entities[0].x, &entities[0].y, entities[0].i, entities[0].j, SPRITE_SIZE, &entities[0].sprite);
+			
 
+		}
+
+
+		//waits 3 ticks after velocity calculations to move object
+		if (!((tick%6) - 2))
+		{
+			
+			collision = collision_chk(entities[0].x, entities[0].y, entities[0].i, entities[0].j);
+
+			if (collision & 0x01) {
+				entities[0].i = 0, entities[0].j = 0, entities[0].sprite = obj_player_d.sprite;
+			}
+			
+			//redraws player sprite after input adjusts velocity
+			move_sprite(&entities[0].x, &entities[0].y, entities[0].i, entities[0].j, &entities[0].sprite);
 		}
 			
 	}
