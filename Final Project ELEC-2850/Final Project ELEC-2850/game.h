@@ -1,7 +1,8 @@
 #pragma once
-#include <time.h>
-#include <stdlib.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <time.h>
 
 
 //Predfined colors values
@@ -112,6 +113,25 @@ typedef struct
 object entities[NUM_ENTITIES];									//this global array holds all info on game objects
 
 
+void write_char(int x, int y, char letter)
+{
+	volatile char* character_buffer = (char *)(0x09000000 + (y << 7) + x);
+	*character_buffer = letter;
+}
+
+
+
+void write_text(int x, int y, char *text)
+{
+	while (*text)
+	{
+		write_char(x, y, *text);
+		x++;
+		text++;
+	}
+}
+
+
 /*draws a single pixel at a point x, y of the desired color. The
 origin is the top left. x & y are positive int values. x is the
 distance in pixels from the left of the screen. y is the
@@ -173,6 +193,44 @@ void draw_rect(location x0, location x1, location y0, location y1, int color)
 	{
 		for (x = x0; x < x1; x++) { plot_pixel(x, y, color); }
 	}
+}
+
+
+void create_hud(int lives, unsigned points)
+{
+	char buffer_0[25],
+		 buffer_1[20];
+	
+	draw_rect(0, res_x, 0, GAME_TOP, BLUE);
+
+	strcpy(buffer_0, "Lives: ");
+	sprintf(buffer_1, "%d", lives);
+	strcat(buffer_0, buffer_1);
+	write_text(5, 1, buffer_0);
+
+	strcpy(buffer_0, "Score: ");
+	sprintf(buffer_1, "%d", points);
+	strcat(buffer_0, buffer_1);
+	write_text(5, 2, buffer_0);
+
+}
+
+
+void update_HUD(int lives, unsigned points)
+{
+	char buffer_0[25],
+		 buffer_1[20];
+
+	strcpy(buffer_0, "Lives: ");
+	sprintf(buffer_1, "%d", lives);
+	strcat(buffer_0, buffer_1);
+	write_text(5, 2, buffer_0);
+
+	strcpy(buffer_0, "Score: ");
+	sprintf(buffer_1, "%d", points);
+	strcat(buffer_0, buffer_1);
+	write_text(5, 3, buffer_0);
+
 }
 
 
@@ -283,6 +341,25 @@ void delete_sprite(int object_id)
 	}
 
 }
+
+
+//moves all sprites but 0 [player]
+void move_all_obstacle()
+{
+	int i;
+
+	for (i = 0; i < act_entities; i++)
+	{
+		if (entities[i].x < -SPRITE_SIZE)
+		{
+			entities[0].points = entities[0].points + entities[i].points;
+			delete_sprite(entities[i].obj_id);
+		}
+		move_sprite(&entities[i].x, &entities[i].y, entities[i].i, entities[i].j, &entities[i].sprite);
+	}
+}
+
+
 
 /*redraws the entire screen shifted 1 pixel to the left.
 Requires an array of new pixels to draw on the right hand side.
@@ -486,9 +563,8 @@ bool gnd_chk(location x, location y)
 
 
 
-/*This function looks at all the pixels between the avatar and  
-it's destination. This is done by reading the pixel values of   
-two rectangles. Pixel color detefines the interation.*/
+//checks all the pixels at the avatars destination for potenital
+//collisions.
 int collision_chk(location x, location y, velocity i, velocity j)
 {
 	int a, b, c, collision, offset_lr, offset_ud, temp;
@@ -508,11 +584,16 @@ int collision_chk(location x, location y, velocity i, velocity j)
 				
 			else if (temp == color_points) { collision = (collision | 0x0002); }
 			
+
+			//red in avatar may accident set off
 			//else if (temp == color_power) { collision = (collision | 0x0004); }
 		}
 	}
 	
-
+	/*This function looks at all the pixels between the avatar and
+	it's destination. This is done by reading the pixel values of
+	two rectangles. Pixel color detefines the interation. unable
+	to get working. return to later.*/
 	//if (i > 0) { offset_lr = x + SPRITE_SIZE; }
 	//else { offset_lr = 0; }
 
@@ -564,4 +645,3 @@ int collision_chk(location x, location y, velocity i, velocity j)
 
 	return collision;
 }
-

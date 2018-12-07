@@ -40,7 +40,6 @@ volatile int *LED_ptr = (int *) GREEN_LED_BASE,					//address location for green
 			 *JTAG_UART_ptr = (int *)JTAG_UART_BASE;			//address location for UART bus
 
 
-
 //Variables
 /*This variable is used to limit the program to running no more
 than once per tick. Set true by the interval timer ISR, and is 
@@ -63,66 +62,85 @@ int tick = 0;
  for the different objects in the game*/
 
 //object player;
-const object obj_player_a = { 10, 0, 35, 25, 0, 0, hp_max, 0,
-							{ { {0,0,0,0,0},
-								{0,1,0,1,0},
-								{0,0,0,0,0},
-								{0,1,1,1,0},
-								{0,0,0,0,0} } },
-							{ { {BLUE, BLUE, BLUE, BLUE, BLUE},
-								{BLUE, RED,  BLUE, RED,  BLUE},
-								{BLUE, BLUE, BLUE, BLUE, BLUE},
-								{BLUE, RED,  RED,  RED,  BLUE},
-								{BLUE, BLUE, BLUE, BLUE, BLUE} } },
-							0 };
-
-const object obj_player_d = { 10, 0, 0, 0, 0, 0, hp_max, 0,
-							{ { {0,0,0,0,0},
-								{0,1,0,1,0},
-								{0,0,0,0,0},
-								{0,1,1,1,0},
-								{0,0,0,0,0} } },
-							{ { {RED,  RED,  RED,  RED,  RED },
-								{RED,  BLUE, RED,  BLUE, RED },
-								{RED,  RED,  RED,  RED,  RED },
-								{RED,  BLUE, BLUE, BLUE, RED },
-								{RED,  RED,  RED,  RED,  RED } } },
-							0 };
-
-//object obstacle 
-const object obj_obs0 = { 20, 0, 35, 25, 0, 0, 0, 0,
-							{ { {1,1,1,1,1},
-								{1,1,1,1,1},
-								{1,1,1,1,1},
-								{1,1,1,1,1},
-								{1,1,1,1,1} } },
-							{ { {WHITE, WHITE, WHITE, WHITE, WHITE},
-								{WHITE, WHITE, WHITE, WHITE, WHITE},
-								{WHITE, WHITE, WHITE, WHITE, WHITE},
-								{WHITE, WHITE, WHITE, WHITE, WHITE},
-								{WHITE, WHITE, WHITE, WHITE, WHITE} } },
-							10 };
+const object obj_player[2] = { { 10, 0, 35, 25, 0, 0, hp_max, 0,
+								 { { {0,0,0,0,0},
+									 {0,1,0,1,0},
+									 {0,0,0,0,0},
+									 {0,1,1,1,0},
+									 {0,0,0,0,0} } },
+								 { { {BLUE, BLUE, BLUE, BLUE, BLUE},
+									 {BLUE, RED,  BLUE, RED,  BLUE},
+									 {BLUE, BLUE, BLUE, BLUE, BLUE},
+									 {BLUE, RED,  RED,  RED,  BLUE},
+									 {BLUE, BLUE, BLUE, BLUE, BLUE} } },
+								 0 },
+								 { 10, 0, 0, 0, 0, 0, hp_max, 0,
+								 { { {0,0,0,0,0},
+									 {0,1,0,1,0},
+									 {0,0,0,0,0},
+									 {0,1,1,1,0},
+									 {0,0,0,0,0} } },
+								 { { {RED,  RED,  RED,  RED,  RED },
+									 {RED,  BLUE, RED,  BLUE, RED },
+									 {RED,  RED,  RED,  RED,  RED },
+									 {RED,  BLUE, BLUE, BLUE, RED },
+									 {RED,  RED,  RED,  RED,  RED } } },
+								 0 } };
 
 
-
-const object obj_obs1 = { 20, 0, 0, 0, 0, 0, 0, 0,
-							{ { {0,0,1,0,0},
-								{0,1,1,1,0},
-								{1,1,1,1,1},
+const object obj_obst[4] = { { 20, 0, 35, 25, 0, 0, 0, 0,
+								{ { {0,0,0,0,0},
+									{0,1,1,1,0},
+									{0,1,1,1,0},
+									{0,1,1,1,0},
+									{0,0,0,0,0} } },
+								{ { {BLACK, BLACK, BLACK, BLACK, BLACK},
+									{BLACK, BLACK, BLACK, BLACK, BLACK},
+									{BLACK, BLACK, WHITE, BLACK, BLACK},
+									{BLACK, BLACK, BLACK, BLACK, BLACK},
+									{BLACK, BLACK, BLACK, BLACK, BLACK} } },
+								5 },
+							  { 20, 0, 35, 25, 0, 0, 0, 0,
+								{ { {0,0,0,0,0},
+									{0,1,1,1,0},
+									{0,1,1,1,0},
+									{0,1,1,1,0},
+									{0,0,0,0,0} } },
+								{ { {BLACK, BLACK, BLACK, BLACK, BLACK},
+									{BLACK, WHITE, WHITE, WHITE, BLACK},
+									{BLACK, WHITE, WHITE, WHITE, BLACK},
+									{BLACK, WHITE, WHITE, WHITE, BLACK},
+									{BLACK, BLACK, BLACK, BLACK, BLACK} } },
+								10 },
+							  { 20, 0, 0, 0, 0, 0, 0, 0,
+								{ { {0,0,1,0,0},
+									{0,1,1,1,0},
+									{1,1,1,1,1},
 								{0,1,1,1,0},
 								{0,0,1,0,0} } },
-							{ { {BLACK, BLACK, WHITE, BLACK, BLACK},
-								{BLACK, WHITE, WHITE, WHITE, BLACK},
-								{WHITE, WHITE, WHITE, WHITE, WHITE},
-								{BLACK, WHITE, WHITE, WHITE, BLACK},
-								{BLACK, BLACK, WHITE, BLACK, BLACK} } },
-							10 };
-
-
+								{ { {BLACK, BLACK, WHITE, BLACK, BLACK},
+									{BLACK, WHITE, WHITE, WHITE, BLACK},
+									{WHITE, WHITE, WHITE, WHITE, WHITE},
+									{BLACK, WHITE, WHITE, WHITE, BLACK},
+									{BLACK, BLACK, WHITE, BLACK, BLACK} } },
+								15 },
+							  { 20, 0, 35, 25, 0, 0, 0, 0,
+								{ { {1,1,1,1,1},
+									{1,1,1,1,1},
+									{1,1,1,1,1},
+									{1,1,1,1,1},
+									{1,1,1,1,1} } },
+								{ { {WHITE, WHITE, WHITE, WHITE, WHITE},
+									{WHITE, WHITE, WHITE, WHITE, WHITE},
+									{WHITE, WHITE, WHITE, WHITE, WHITE},
+									{WHITE, WHITE, WHITE, WHITE, WHITE},
+									{WHITE, WHITE, WHITE, WHITE, WHITE} } },
+								25 } };
 
 //function prototypes
 void delay(volatile int);										//used to create a time delay using a for loop
-void interval_timer_ISR();										//this code is executed whenever the interval timer generates an interrupt 
+void interval_timer_ISR();										//this code is executed whenever the interval timer generates an interrupt
+void rand_sprite();												//this function generates a random sprite for the player to dodge
 
 
 void main()
@@ -132,7 +150,8 @@ void main()
 		timer,													//used to store the interval counter value for loading
 		i, j, k,												//i, j, k used for various counters									
 		data,													//used to store keyboard output from computer
-		collision,												//used to store collision code
+		collision = 0,											//used to store collision code
+		speed = 60,												//used to control the speed at which random sprites spawn
 		lives = starting_lives,									//number of player lives
 		pt_total;												//used to hold the sum of the players points
 		
@@ -141,18 +160,20 @@ void main()
 	/*these arrays hold the color values of all news pixels when
 	moving the entire screen left, right, up or down.
 	Current only hold a single blue pixel as a test case*/
-	int new_pixels_lr[RES_Y - GAME_TOP] = { BLUE },
-		new_pixels_ud[RES_X] = { BLUE };
+	int new_pixels_lr[RES_Y - GAME_TOP] = { BLACK },
+		new_pixels_ud[RES_X] = { BLACK };
+
+	srand(time(0));
 
 	clear_screen(color_back);									//makes the screen the background color
-	draw_rect(0, res_x, 0, GAME_TOP, BLUE);
+	create_hud(lives, entities[0].points);						//generates the hud at the top of the screen
 
 	data = *(JTAG_UART_ptr);									//Read the JTAG_UART data register
 	
-	add_sprite(obj_player_a, obj_player_a.x, obj_player_a.y, 0, 0);			//loads player entity for at starting location
-	add_sprite(obj_obs0, 10, 10, 0, 0);
-	add_sprite(obj_obs1, 50, 50, 0, 0);
-	add_sprite(obj_obs1, 50, obj_player_a.y, -1, 0);
+
+	//loads player entity for at starting location
+	add_sprite(obj_player[0], obj_player[0].x, obj_player[0].y, 0, 0);
+	
 
 	//This segement of code sets up the timer to run
 	*(timer_ptr) = 0;											//clears the interval timer status
@@ -175,9 +196,24 @@ void main()
 		*(timer_ptr) = 0;											//clears countdown flag
 		tick = (tick + 1) % 60;										//increments tick from 0 to 59
 		
+
+		if(!(tick % speed)){
+			rand_sprite();
+
+			if (speed >30)
+			{
+				speed--;
+			}
+			 
+		}
+
+		if (!(tick % 20)) {
+			move_all_obstacle();
+		}
+
 		
 		//reads keyboard input 10 times per second
-		if (!(tick % 6))
+		if (!((tick % 6) - 5))
 		{
 
 			data = *(JTAG_UART_ptr);							//Read the JTAG_UART data register
@@ -239,21 +275,18 @@ void main()
 
 			//stops player if still moving down
 			if (entities[0].y == res_y - SPRITE_SIZE && entities[0].j > 0) { entities[0].j = 0; }
-			
-
-			
-
+		
 		}
 
 
 		//waits 3 ticks after velocity calculations to move object
-		if (!((tick%6) - 3))
+		if (!(tick % 6))
 		{
 			
 			collision = collision_chk(entities[0].x, entities[0].y, entities[0].i, entities[0].j);
 			
 			if ((collision & 0x01) == 1 ) {
-				entities[0].i = 0, entities[0].j = 0, entities[0].sprite = obj_player_d.sprite;
+				entities[0].i = 0, entities[0].j = 0, entities[0].sprite = obj_player[1].sprite;
 			}
 			
 			//redraws player sprite after input adjusts velocity
@@ -270,6 +303,15 @@ void delay(volatile int time) {
 	while (count < time) {
 		count++;
 	}
+}
+
+
+/*This function randomally add sprites from the left hand side
+with a random amount of left momentium.*/
+void rand_sprite()
+{
+	
+	add_sprite(obj_obst[rand() % 4], RES_X, (rand() % (RES_Y - GAME_TOP)) + GAME_TOP, -(rand() % 5 + 1), 0);
 }
 
 
