@@ -1,7 +1,8 @@
 #pragma once
-#include <time.h>
-#include <stdlib.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <time.h>
 
 
 //Predfined colors values
@@ -112,6 +113,25 @@ typedef struct
 object entities[NUM_ENTITIES];									//this global array holds all info on game objects
 
 
+void write_char(int x, int y, char letter)
+{
+	volatile char* character_buffer = (char *)(0x09000000 + (y << 7) + x);
+	*character_buffer = letter;
+}
+
+
+
+void write_text(int x, int y, char *text)
+{
+	while (*text)
+	{
+		write_char(x, y, *text);
+		x++;
+		text++;
+	}
+}
+
+
 /*draws a single pixel at a point x, y of the desired color. The
 origin is the top left. x & y are positive int values. x is the
 distance in pixels from the left of the screen. y is the
@@ -176,35 +196,74 @@ void draw_rect(location x0, location x1, location y0, location y1, int color)
 }
 
 
+void create_hud(int lives, unsigned points)
+{
+	char buffer_0[25],
+		 buffer_1[20];
+	
+	draw_rect(0, res_x, 0, GAME_TOP, BLUE);
+
+	strcpy(buffer_0, "Lives: ");
+	sprintf(buffer_1, "%d", lives);
+	strcat(buffer_0, buffer_1);
+	write_text(5, 1, buffer_0);
+
+	strcpy(buffer_0, "Score: ");
+	sprintf(buffer_1, "%d", points);
+	strcat(buffer_0, buffer_1);
+	write_text(5, 2, buffer_0);
+
+}
+
+
+void update_HUD(int lives, unsigned points)
+{
+	char buffer_0[25],
+		 buffer_1[20];
+
+	strcpy(buffer_0, "Lives: ");
+	sprintf(buffer_1, "%d", lives);
+	strcat(buffer_0, buffer_1);
+	write_text(5, 2, buffer_0);
+
+	strcpy(buffer_0, "Score: ");
+	sprintf(buffer_1, "%d", points);
+	strcat(buffer_0, buffer_1);
+	write_text(5, 3, buffer_0);
+
+}
+
+
 /*draws a square game sprite when given x,y cordinates of the
-top left of the sprite, pixel size of the sprite, and pointer to
+top left of the sprite, and pointer to
 the sprite image.*/
-void draw_sprite(location x, location y, int size, image *sprite)
+void draw_sprite(location x, location y, image *sprite)
 {
 	int i, j;
 
-	for (j = 0; j < size; j++)
+	for (j = 0; j < SPRITE_SIZE; j++)
 	{
-		for (i = 0; i < size; i++) { plot_pixel(x + i, y + j, (*sprite).pixel[j][i]); }
+		for (i = 0; i < SPRITE_SIZE; i++) { plot_pixel(x + i, y + j, (*sprite).pixel[j][i]); }
 	}
 }
 
 
-void erase_sprite(location x, location y, int size)
+//draws over sprite at location with background color
+void erase_sprite(location x, location y)
 {
-	draw_rect(x, x + size, y, y + size, color_back);
+	draw_rect(x, x + SPRITE_SIZE, y, y + SPRITE_SIZE, color_back);
 }
 
 
 /*This function updates the screen buffer for one sprite based
 on pointers to the sprites location and the sprites velocity.
-Will update the location values. Also requires the pixel size
-of the sprite, and a pointer to sprites image.*/
-void move_sprite(location *x, location *y, velocity i, velocity j, int size, image *sprite)
+Will update the location values. Also requires a pointer to
+sprites image.*/
+void move_sprite(location *x, location *y, velocity i, velocity j, image *sprite)
 {
-	erase_sprite(*x, *y, size);
+	erase_sprite(*x, *y);
 	*x = (int) *x + i, *y = (int) *y + j;
-	draw_sprite(*x, *y, size, sprite);
+	draw_sprite(*x, *y, sprite);
 }
 
 
@@ -215,7 +274,7 @@ void move_all_sprites()
 
 	for (i = 0; i < act_entities; i++)
 	{
-		move_sprite(&entities[i].x, &entities[i].y, entities[i].i, entities[i].j, SPRITE_SIZE, &entities[i].sprite);
+		move_sprite(&entities[i].x, &entities[i].y, entities[i].i, entities[i].j, &entities[i].sprite);
 	}
 }
 
@@ -223,7 +282,7 @@ void move_all_sprites()
 /*this function adds a sprite to the entities array, at the 
 specified location, with the specified velocity. Then draws the 
 new sprite, and increases the count of the active entities*/
-void add_sprite(object sprite, location x, location y, velocity i, velocity j, int size)
+void add_sprite(object sprite, location x, location y, velocity i, velocity j)
 {
 
 	entities[act_entities] = sprite,
@@ -233,7 +292,7 @@ void add_sprite(object sprite, location x, location y, velocity i, velocity j, i
 	entities[act_entities].i = i,
 	entities[act_entities].j = j;
 
-	draw_sprite(x, y, size, &entities[act_entities].sprite);
+	draw_sprite(x, y, &entities[act_entities].sprite);
 
 	act_entities++;
 
@@ -252,7 +311,7 @@ void delete_sprite(int object_id)
 
 	//checks to see if the top element first
 	if (entities[act_entities].obj_id == object_id) {
-		erase_sprite(entities[act_entities].x, entities[act_entities].y, SPRITE_SIZE);
+		erase_sprite(entities[act_entities].x, entities[act_entities].y);
 		act_entities--;
 		return;
 	}
@@ -273,7 +332,7 @@ void delete_sprite(int object_id)
 		else
 		{
 			if (entities[i].obj_id == object_id) {
-				erase_sprite(entities[i].x, entities[i].y, SPRITE_SIZE);
+				erase_sprite(entities[i].x, entities[i].y);
 				entities[i] = entities[i + 1];
 				act_entities--;
 				removed = true;
@@ -282,6 +341,25 @@ void delete_sprite(int object_id)
 	}
 
 }
+
+
+//moves all sprites but 0 [player]
+void move_all_obstacle()
+{
+	int i;
+
+	for (i = 0; i < act_entities; i++)
+	{
+		if (entities[i].x < -SPRITE_SIZE)
+		{
+			entities[0].points = entities[0].points + entities[i].points;
+			delete_sprite(entities[i].obj_id);
+		}
+		move_sprite(&entities[i].x, &entities[i].y, entities[i].i, entities[i].j, &entities[i].sprite);
+	}
+}
+
+
 
 /*redraws the entire screen shifted 1 pixel to the left.
 Requires an array of new pixels to draw on the right hand side.
@@ -485,38 +563,85 @@ bool gnd_chk(location x, location y)
 
 
 
-/*This function looks at all the pixels between the avatar and  
-it's destination. This is done by reading the pixel values of   
-two rectangles. Pixel color detefines the interation.*/
-int collision_chk(location x, location y, velocity i, velocity j, int size)
+//checks all the pixels at the avatars destination for potenital
+//collisions.
+int collision_chk(location x, location y, velocity i, velocity j)
 {
-	int a, b, collision;
+	int a, b, c, collision, offset_lr, offset_ud, temp;
 
-	for (a = x + SPRITE_SIZE; a < x + SPRITE_SIZE + i; a++)
+	collision = 0;
+
+	for (a = 0; a < SPRITE_SIZE; a++)
 	{
-		for (b = y + j; b < y + SPRITE_SIZE + j; b++)
+		for (b = 0; b < SPRITE_SIZE; b++)
 		{
-			if (read_pixel(a, b) == color_solid) { collision & 0x0001; }
+			
+			temp = read_pixel(x + i + a, y + j + b) & 0xFF;
+			plot_pixel(x + i + a, y + j + b, YELLOW);
+			
 
-			else if (read_pixel(a, b) == color_points) { collision & 0x0002; }
+			if (temp == color_solid) { collision = (collision | 0x0001); }
+				
+			else if (temp == color_points) { collision = (collision | 0x0002); }
+			
 
-			else if (read_pixel(a, b) == color_power) { collision & 0x0004; }
+			//red in avatar may accident set off
+			//else if (temp == color_power) { collision = (collision | 0x0004); }
 		}
-
 	}
 	
-	for (a = x + i; a < x + SPRITE_SIZE + i; a++)
-	{
-		for (b = y + SPRITE_SIZE + j; b < y + SPRITE_SIZE + j; b++)
-		{
-			if (read_pixel(a, b) == color_solid) { collision & 0x0001; }
-			
-			else if (read_pixel(a, b) == color_points) { collision & 0x0002; }
-				
-			else if (read_pixel(a, b) == color_power) { collision & 0x0004; }
-		}
+	/*This function looks at all the pixels between the avatar and
+	it's destination. This is done by reading the pixel values of
+	two rectangles. Pixel color detefines the interation. unable
+	to get working. return to later.*/
+	//if (i > 0) { offset_lr = x + SPRITE_SIZE; }
+	//else { offset_lr = 0; }
 
-	}
+	//for (b = 0; b < SPRITE_SIZE + j; b++)
+	//{
+	//	if (b < j) { c = (i / j) * b; }
+	//	else { c = i; }
+	//	
+	//	for (a = 0; a < c; a++)
+	//	{
+	//		//add an if and else here to choose the whether to check the right or left side
+	//		temp = read_pixel(offset_lr + a, y + b);
+
+	//		//this is the error checking, leave it after the read as not to fuck up the read.
+	//		plot_pixel( offset_lr + a, y + b, YELLOW);
+
+	//		if (temp == color_solid) { collision = (collision | 0x0001);  }
+
+	//		else if (temp == color_points) { collision = (collision | 0x0002); }
+
+	//		else if (temp == color_power) { collision = (collision | 0x0004); }
+	//	}
+
+	//}
+
+	//if (i > 0) { offset_ud = y + SPRITE_SIZE; }
+	//else { offset_ud = 0; }
+	//
+	//for (a = 0; a < SPRITE_SIZE + i; a++)
+	//{
+	//	if (a < i) { c = (j / i) * a; }
+	//	else { c = j; }
+
+	//	for (b = 0; b < c; b++)
+	//	{
+	//		//add an if and else here to choose the whether to check the right or left side
+	//		temp = read_pixel(x + a, offset_ud + b);
+
+	//		plot_pixel(x + a, offset_ud + b, YELLOW);
+
+	//		if (temp == color_solid) { collision = (collision | 0x0001); }
+
+	//		else if (temp == color_points) { collision = (collision | 0x0002); }
+
+	//		else if (temp == color_power) { collision = (collision | 0x0004); }
+	//	}
+
+	//}
 
 	return collision;
 }
