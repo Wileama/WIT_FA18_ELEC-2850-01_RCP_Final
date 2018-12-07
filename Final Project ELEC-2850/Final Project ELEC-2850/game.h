@@ -495,67 +495,72 @@ int collision_chk(location x, location y, velocity i, velocity j)
 
 	collision = 0;
 
-	if(i == 0 && j == 0) { 
-		for (a = 0; a < SPRITE_SIZE; b++)
-		{
-			for (b = 0; b < SPRITE_SIZE; b++)
-			{
-				temp = read_pixel()
-			}
-		}
-	
-	
-	}
-
-	if (i > 0) { offset_lr = x + SPRITE_SIZE; }
-	else {offset_lr = 0}
-
-	for (b = 0; b <= SPRITE_SIZE + j; b++)
+	for (a = 0; a < SPRITE_SIZE; a++)
 	{
-		if (b < j) { c = (i / j) * b; }
-		else { c = i; }
-		
-		for (a = 0; a <= c; a++)
+		for (b = 0; b < SPRITE_SIZE; b++)
 		{
-			//add an if and else here to choose the whether to check the right or left side
-			temp = read_pixel(offset_lr + a, y + b);
-
-			//this is the error checking, leave it after the read as not to fuck up the read.
-			plot_pixel( offset_lr + a, y + b, YELLOW);
-
-			if (temp == color_solid) { collision | 0x0001; printf("COLLISION"); }
-
-			else if (temp == color_points) { collision | 0x0002; }
-
-			else if (temp == color_power) { collision | 0x0004; }
-		}
-
-	}
-
-	if (i > 0) { offset_ud = y + SPRITE_SIZE; }
-	else { offset_ud = 0 }
-	
-	for (a = 0; a <= SPRITE_SIZE + i; a++)
-	{
-		if (a < i) { c = (j / i) * a; }
-		else { c = j; }
-
-		for (b = 0; b <= c; b++)
-		{
-			//add an if and else here to choose the whether to check the right or left side
-			temp = read_pixel(x + a, offset_ud + b);
-
-			plot_pixel(x + a, offset_ud + b, YELLOW);
-
-			if (temp == color_solid) { collision | 0x0001; printf("COLLISION");
-			}
 			
-			else if (temp == color_points) { collision | 0x0002; }
+			temp = read_pixel(x + i + a, y + j + b) & 0xFF;
+			plot_pixel(x + i + a, y + j + b, YELLOW);
+			
 
-			else if (temp == color_power) { collision | 0x0004; }
+			if (temp == color_solid) { collision = (collision | 0x0001); }
+				
+			else if (temp == color_points) { collision = (collision | 0x0002); }
+			
+			//else if (temp == color_power) { collision = (collision | 0x0004); }
 		}
-
 	}
+	
+
+	//if (i > 0) { offset_lr = x + SPRITE_SIZE; }
+	//else { offset_lr = 0; }
+
+	//for (b = 0; b < SPRITE_SIZE + j; b++)
+	//{
+	//	if (b < j) { c = (i / j) * b; }
+	//	else { c = i; }
+	//	
+	//	for (a = 0; a < c; a++)
+	//	{
+	//		//add an if and else here to choose the whether to check the right or left side
+	//		temp = read_pixel(offset_lr + a, y + b);
+
+	//		//this is the error checking, leave it after the read as not to fuck up the read.
+	//		plot_pixel( offset_lr + a, y + b, YELLOW);
+
+	//		if (temp == color_solid) { collision = (collision | 0x0001);  }
+
+	//		else if (temp == color_points) { collision = (collision | 0x0002); }
+
+	//		else if (temp == color_power) { collision = (collision | 0x0004); }
+	//	}
+
+	//}
+
+	//if (i > 0) { offset_ud = y + SPRITE_SIZE; }
+	//else { offset_ud = 0; }
+	//
+	//for (a = 0; a < SPRITE_SIZE + i; a++)
+	//{
+	//	if (a < i) { c = (j / i) * a; }
+	//	else { c = j; }
+
+	//	for (b = 0; b < c; b++)
+	//	{
+	//		//add an if and else here to choose the whether to check the right or left side
+	//		temp = read_pixel(x + a, offset_ud + b);
+
+	//		plot_pixel(x + a, offset_ud + b, YELLOW);
+
+	//		if (temp == color_solid) { collision = (collision | 0x0001); }
+
+	//		else if (temp == color_points) { collision = (collision | 0x0002); }
+
+	//		else if (temp == color_power) { collision = (collision | 0x0004); }
+	//	}
+
+	//}
 
 	return collision;
 }

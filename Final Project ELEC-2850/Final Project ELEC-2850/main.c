@@ -83,14 +83,14 @@ const object obj_player_d = { 10, 0, 0, 0, 0, 0, hp_max, 0,
 								{0,1,1,1,0},
 								{0,0,0,0,0} } },
 							{ { {RED,  RED,  RED,  RED,  RED },
-								{RED,  BLUE, BLUE, BLUE, RED },
+								{RED,  BLUE, RED,  BLUE, RED },
 								{RED,  RED,  RED,  RED,  RED },
 								{RED,  BLUE, BLUE, BLUE, RED },
 								{RED,  RED,  RED,  RED,  RED } } },
 							0 };
 
 //object obstacle 
-const object obj_obs1 = { 20, 0, 35, 25, 0, 0, 0, 0,
+const object obj_obs0 = { 20, 0, 35, 25, 0, 0, 0, 0,
 							{ { {1,1,1,1,1},
 								{1,1,1,1,1},
 								{1,1,1,1,1},
@@ -105,7 +105,7 @@ const object obj_obs1 = { 20, 0, 35, 25, 0, 0, 0, 0,
 
 
 
-const object obj_obs2 = { 20, 0, 0, 0, 0, 0, 0, 0,
+const object obj_obs1 = { 20, 0, 0, 0, 0, 0, 0, 0,
 							{ { {0,0,1,0,0},
 								{0,1,1,1,0},
 								{1,1,1,1,1},
@@ -136,7 +136,7 @@ void main()
 		lives = starting_lives,									//number of player lives
 		pt_total;												//used to hold the sum of the players points
 		
-	bool draw = 1;												//This flag tells the main loop if a redraw of the sprites is required
+	bool kill = 0;												//This flag tells the main loop if a player has died
 
 	/*these arrays hold the color values of all news pixels when
 	moving the entire screen left, right, up or down.
@@ -150,9 +150,9 @@ void main()
 	data = *(JTAG_UART_ptr);									//Read the JTAG_UART data register
 	
 	add_sprite(obj_player_a, obj_player_a.x, obj_player_a.y, 0, 0);			//loads player entity for at starting location
-	add_sprite(obj_obs1, 10, 10, 0, 0);
-	add_sprite(obj_obs2, 50, 50, 0, 0);
-
+	add_sprite(obj_obs0, 10, 10, 0, 0);
+	add_sprite(obj_obs1, 50, 50, 0, 0);
+	add_sprite(obj_obs1, 50, obj_player_a.y, -1, 0);
 
 	//This segement of code sets up the timer to run
 	*(timer_ptr) = 0;											//clears the interval timer status
@@ -165,7 +165,6 @@ void main()
 	//start interval timer looping, enable its interrupts
 	*(timer_ptr + 1) = 0x6;										//STOP = 0, START = 1, CONT = 1, ITO = 0
 
-
 	while (1)
 	{
 		
@@ -175,7 +174,7 @@ void main()
 		
 		*(timer_ptr) = 0;											//clears countdown flag
 		tick = (tick + 1) % 60;										//increments tick from 0 to 59
-	
+		
 		
 		//reads keyboard input 10 times per second
 		if (!(tick % 6))
@@ -186,8 +185,7 @@ void main()
 			if (data & 0x00008000)								//check RVALID to see if there is new data
 			{
 				data = data & 0x000000FF;						//the data is in the least significant byte
-				printf("\ndata: %d", data);
-				printf("\nAvatar velocity %di, %dj", (int)entities[0].i, (int)entities[0].j);
+				printf("\ndata: %d", data);						//code for bug checking reverse engineering keyboard inputs
 			}
 
 			//these ifs handles the keyboard input
@@ -249,12 +247,12 @@ void main()
 
 
 		//waits 3 ticks after velocity calculations to move object
-		if (!((tick%6) - 2))
+		if (!((tick%6) - 3))
 		{
 			
 			collision = collision_chk(entities[0].x, entities[0].y, entities[0].i, entities[0].j);
-
-			if (collision & 0x01) {
+			
+			if ((collision & 0x01) == 1 ) {
 				entities[0].i = 0, entities[0].j = 0, entities[0].sprite = obj_player_d.sprite;
 			}
 			
