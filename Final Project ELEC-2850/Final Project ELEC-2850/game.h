@@ -405,3 +405,4 @@ bool gnd_chk(location x, location y)
 
 	return 0;	
 }
+ 
