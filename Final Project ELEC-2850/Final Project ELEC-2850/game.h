@@ -493,7 +493,19 @@ int collision_chk(location x, location y, velocity i, velocity j)
 {
 	int a, b, c, collision, offset_lr, offset_ud, temp;
 
-	collision = 0;																																																																																																																																																																																																																									
+	collision = 0;
+
+	if(i == 0 && j == 0) { 
+		for (a = 0; a < SPRITE_SIZE; b++)
+		{
+			for (b = 0; b < SPRITE_SIZE; b++)
+			{
+				temp = read_pixel()
+			}
+		}
+	
+	
+	}
 
 	if (i > 0) { offset_lr = x + SPRITE_SIZE; }
 	else {offset_lr = 0}
