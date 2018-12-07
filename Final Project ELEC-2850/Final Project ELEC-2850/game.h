@@ -24,7 +24,7 @@
 #define RES_X 80												//VGA screen width size
 #define RES_Y 60												//VGA screen height size																
 #define SPRITE_SIZE 5											//used to define the size of a sprite
-#define NUM_ENTITIES 100										//used to define the max number of active entities
+#define NUM_ENTITIES 256										//used to define the max number of active entities
 
 
 /*used to define the top of the game screen. pixels on vertical 
@@ -142,6 +142,12 @@ void plot_pixel(location x, location y, int pixel_color)
 }
 
 
+void add_pixel(location x, location y, int pixel_color)
+{
+	if (pixel_color != color_back) { *(volatile char *)(pixel_buffer_start + (y << 7) + x) = pixel_color; }
+}
+
+
 //returns the integer value of the pixel at position (x,y)
 char read_pixel(location x, location y)
 {
@@ -224,19 +230,18 @@ void update_HUD(int lives, unsigned points)
 	strcpy(buffer_0, "Lives: ");
 	sprintf(buffer_1, "%d", lives);
 	strcat(buffer_0, buffer_1);
-	write_text(5, 2, buffer_0);
+	write_text(5, 1, buffer_0);
 
 	strcpy(buffer_0, "Score: ");
 	sprintf(buffer_1, "%d", points);
 	strcat(buffer_0, buffer_1);
-	write_text(5, 3, buffer_0);
+	write_text(5, 2, buffer_0);
 
 }
 
 
 /*draws a square game sprite when given x,y cordinates of the
-top left of the sprite, and pointer to
-the sprite image.*/
+top left of the sprite, and pointer to the sprite image.*/
 void draw_sprite(location x, location y, image *sprite)
 {
 	int i, j;
@@ -247,6 +252,15 @@ void draw_sprite(location x, location y, image *sprite)
 	}
 }
 
+void draw_obst(location x, location y, image *sprite)
+{
+	int i, j;
+
+	for (j = 0; j < SPRITE_SIZE; j++)
+	{
+		for (i = 0; i < SPRITE_SIZE; i++) { add_pixel(x + i, y + j, (*sprite).pixel[j][i]); }
+	}
+}
 
 //draws over sprite at location with background color
 void erase_sprite(location x, location y)
@@ -266,6 +280,13 @@ void move_sprite(location *x, location *y, velocity i, velocity j, image *sprite
 	draw_sprite(*x, *y, sprite);
 }
 
+
+void move_obst(location *x, location *y, velocity i, velocity j, image *sprite)
+{
+	erase_sprite(*x, *y);
+	*x = (int)*x + i, *y = (int)*y + j;
+	draw_obst(*x, *y, sprite);
+}
 
 //updates all active sprites in the entities array
 void move_all_sprites()
@@ -346,16 +367,26 @@ void delete_sprite(int object_id)
 //moves all sprites but 0 [player]
 void move_all_obstacle()
 {
-	int i;
+	int i, deleted = 0;
 
 	for (i = 0; i < act_entities; i++)
 	{
-		if (entities[i].x < -SPRITE_SIZE)
-		{
-			entities[0].points = entities[0].points + entities[i].points;
-			delete_sprite(entities[i].obj_id);
+		if (entities[i].x + entities[i].i < 0) {
+			entities[i].i = -entities[i].x;
 		}
-		move_sprite(&entities[i].x, &entities[i].y, entities[i].i, entities[i].j, &entities[i].sprite);
+
+		if (entities[i].x == 0) {
+			entities[0].points = entities[0].points + entities[i].points;
+			deleted++, act_entities--;
+		}
+		
+
+		if (deleted) { 
+			erase_sprite(entities[i].x, entities[i].y);
+			entities[i] = entities[i + deleted];
+		}
+
+		move_obst(&entities[i].x, &entities[i].y, entities[i].i, entities[i].j, &entities[i].sprite);
 	}
 }
 
@@ -576,9 +607,7 @@ int collision_chk(location x, location y, velocity i, velocity j)
 		for (b = 0; b < SPRITE_SIZE; b++)
 		{
 			
-			temp = read_pixel(x + i + a, y + j + b) & 0xFF;
-			plot_pixel(x + i + a, y + j + b, YELLOW);
-			
+			temp = read_pixel(x + i + a, y + j + b) & 0xFF;			
 
 			if (temp == color_solid) { collision = (collision | 0x0001); }
 				
