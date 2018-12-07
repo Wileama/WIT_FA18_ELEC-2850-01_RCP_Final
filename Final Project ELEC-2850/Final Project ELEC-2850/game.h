@@ -380,9 +380,34 @@ void adv_screen_rd(int left_pixel[RES_Y - GAME_TOP], int top_pixel[RES_X])
 	for (x = res_x - 1; x > 0; x--) { plot_pixel(x, y, top_pixel[x]); }
 
 }
+// I will try to implement using what the professor has, so when it comes to defining the locations i do not know wht to do
+* Draw a single character on the screen */
+
+void writeText(int x_start, int y_start, char *inText)
+{
 
 
+	while (*inText)
+	{
+		drawcharacter(x_start, y_start, *inText);
+		x_start = x_start -40;
+		y_start = y_start + GAMETOP;
+		inText = inText + 1;
+	}
+}
 
+void writeText2(int x_start, int y_start, char *inText)
+{
+
+
+	while (*inText)
+	{
+		drawcharacter(x_start, y_start, *inText);
+		x_start = x_start -35;
+		y_start = y_start + GAMETOP;
+		inText = inText + 1;
+	}
+}
 
 
 
